@@ -39,6 +39,33 @@ After installation, publish the config file:
 php artisan vendor:publish --tag="creators-ticketing-config"
 ```
 
+Setup: Filament Panel Integration: 
+The plugin integration code should be added to your main Filament admin panel provider file, which is typically located at:
+Open your AdminPanelProvider.php file and modify the panel() method as shown below. You need to include the use statement for the plugin class and call TicketingPlugin::make() inside the ->plugins() array.
+
+```
+app/Providers/Filament/AdminPanelProvider.php
+```
+```
+use Filament\Panel;
+use Filament\PanelProvider;
+use daacreators\CreatorsTicketing\TicketingPlugin; // Add this line
+
+class AdminPanelProvider extends PanelProvider
+{
+    public function panel(Panel $panel): Panel
+    {
+        return $panel
+            ->default()
+            // ... other panel configuration ...
+            ->plugins([
+                TicketingPlugin::make(), // Add the plugin call here
+            ])
+            // ... rest of the panel configuration ...
+    }
+}
+```
+
 Run the migrations:
 
 ```bash
