@@ -1,0 +1,73 @@
+<?php
+
+namespace daacreators\CreatorsTicketing\Filament\Resources\Tickets\RelationManagers;
+
+use Filament\Tables;
+use Filament\Tables\Table;
+use Filament\Support\Enums\FontWeight;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\Layout\Stack;
+use Filament\Tables\Columns\Layout\Split;
+use Filament\Resources\RelationManagers\RelationManager;
+
+class InternalNotesRelationManager extends RelationManager
+{
+    protected static string $relationship = 'internalNotes';
+    protected static ?string $title = 'Internal Notes';
+
+    public function table(Table $table): Table
+    {
+        return $table
+            ->heading('Internal Notes')
+            ->description('Private notes visible only to support agents.')
+            ->columns([
+                Stack::make([
+                    Split::make([
+                        TextColumn::make('user.name')
+                            ->icon('heroicon-o-shield-check')
+                            ->badge()
+                            ->color('warning')
+                            ->weight(FontWeight::Bold)
+                            ->formatStateUsing(fn($state) => "{$state} • Agent Note"),
+
+                        TextColumn::make('created_at')
+                            ->since()
+                            ->color('gray')
+                            ->weight(FontWeight::Medium)
+                            ->size('sm')
+                            ->alignRight(),
+                    ])->from('md'),
+
+                    TextColumn::make('content')
+                        ->html()
+                        ->extraAttributes([
+                            'class' => '
+                                rounded-2xl
+                                bg-amber-100 dark:bg-amber-900/40
+                                text-amber-800 dark:text-amber-100
+                                px-4 py-3 mt-2 shadow-sm
+                                ring-1 ring-amber-200/40 dark:ring-amber-800/40
+                                prose-sm max-w-none
+                            ',
+                        ]),
+                ])->space(3),
+            ])
+            ->defaultSort('created_at', 'desc')
+            ->paginated(false)
+            ->poll('10s')
+            ->striped(false)
+            ->actions([])
+            ->bulkActions([])
+            ->headerActions([])
+            ->contentGrid(['md' => 1])
+            ->emptyStateHeading('No internal notes yet')
+            ->emptyStateDescription('Add private notes visible only to support agents.')
+            ->extraAttributes([
+                'class' => '
+                    divide-y divide-gray-200/10 dark:divide-gray-800/30
+                    bg-gray-50 dark:bg-gray-900/50
+                    rounded-2xl p-6 space-y-5
+                ',
+            ]);
+    }
+}

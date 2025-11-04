@@ -1,0 +1,34 @@
+@import "tailwindcss";
+
+.creators-ticketing [x-ref="chatContainer"]::-webkit-scrollbar {
+    width: 6px;
+}
+
+.creators-ticketing [x-ref="chatContainer"]::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+}
+
+.creators-ticketing [x-ref="chatContainer"]::-webkit-scrollbar-thumb {
+    background: rgba(156, 163, 175, 0.3);
+    border-radius: 10px;
+}
+
+.creators-ticketing [x-ref="chatContainer"]::-webkit-scrollbar-thumb:hover {
+    background: rgba(156, 163, 175, 0.5);
+}
+
+ @keyframes slideInRight {
+        from {
+            opacity: 0;
+            transform: translateX(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+}
+    
+[wire\:poll] > div > div {
+        animation: slideInRight 0.3s ease-out;
+}
