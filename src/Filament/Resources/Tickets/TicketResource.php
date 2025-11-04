@@ -14,6 +14,7 @@ use Filament\Actions\ViewAction;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components;
+use Illuminate\Support\Facades\DB;
 use Filament\Forms\Components\Radio;
 use Filament\Actions\BulkActionGroup;
 use Filament\Forms\Components\Select;
@@ -584,13 +585,19 @@ class TicketResource extends Resource
                                     ->searchable()
                                     ->getSearchResultsUsing(function (string $search, Component $component) use ($userModel) {
                                         $departmentId = $component->getContainer()->getRecord()?->department_id;
+                                        $userInstance = new $userModel;
+                                        $userKey = $userInstance->getKeyName();
+                                        $pivotUserColumn = "user_{$userKey}";
 
                                         return $userModel::when(
                                             config('creators-ticketing.ticket_assign_scope') === 'department_only' && $departmentId !== null,
-                                            fn ($query) => $query->whereExists(function ($subquery) use ($departmentId) {
-                                                $subquery->select(\DB::raw(1))
+                                            fn ($query) => $query->whereExists(function ($subquery) use ($departmentId, $pivotUserColumn, $userKey) {
+                                                $subquery->select(DB::raw(1))
                                                     ->from(config('creators-ticketing.table_prefix') . 'department_users')
-                                                    ->whereColumn(config('creators-ticketing.table_prefix') . 'department_users.user_id', 'users.id')
+                                                    ->whereColumn(
+                                                        config('creators-ticketing.table_prefix') . "department_users.{$pivotUserColumn}",
+                                                        "users.{$userKey}"
+                                                    )
                                                     ->where(config('creators-ticketing.table_prefix') . 'department_users.department_id', $departmentId);
                                             })
                                         )

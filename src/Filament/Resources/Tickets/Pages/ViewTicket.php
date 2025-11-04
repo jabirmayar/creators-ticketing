@@ -792,10 +792,17 @@ class ViewTicket extends ViewRecord
                                         return $userModel::when(
                                             config('creators-ticketing.ticket_assign_scope') === 'department_only' && $departmentId !== null,
                                             fn ($query) => $query->whereExists(function ($subquery) use ($departmentId) {
-                                                $subquery->select(\DB::raw(1))
+                                                $userInstance = new $userModel;
+                                                $userKey = $userInstance->getKeyName();
+                                                $pivotUserColumn = "user_{$userKey}";
+                                                $subquery->select(DB::raw(1))
                                                     ->from(config('creators-ticketing.table_prefix') . 'department_users')
-                                                    ->whereColumn(config('creators-ticketing.table_prefix') . 'department_users.user_id', 'users.id')
+                                                    ->whereColumn(
+                                                        config('creators-ticketing.table_prefix') . "department_users.{$pivotUserColumn}",
+                                                        "users.{$userKey}"
+                                                    )
                                                     ->where(config('creators-ticketing.table_prefix') . 'department_users.department_id', $departmentId);
+
                                             })
                                         )
                                         ->where(fn ($query) => $query->where('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%"))

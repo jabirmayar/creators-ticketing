@@ -23,8 +23,13 @@ trait HasTicketPermissions
         $allowed = config('creators-ticketing.navigation_visibility.allowed', []);
         $isAdmin = in_array($user->{$field} ?? null, $allowed, true);
 
+        $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
+        $userInstance = new $userModel;
+        $userKey = $userInstance->getKeyName();
+        $pivotUserColumn = "user_{$userKey}";
+
         $departments = DB::table(config('creators-ticketing.table_prefix') . 'department_users')
-            ->where('user_id', $user->id)
+            ->where($pivotUserColumn, $user->{$userKey})
             ->get();
 
         $permissions = [];
