@@ -12,18 +12,27 @@ class TicketStatsWidget extends BaseWidget
     protected function getStats(): array
     {
         return [
-            Stat::make('Total Tickets', Ticket::count())
-                ->description('All tickets in the system')
+            Stat::make(
+                __('creators-ticketing::resources.widgets.ticket_stats.total_tickets'), 
+                Ticket::count()
+            )
+                ->description(__('creators-ticketing::resources.widgets.ticket_stats.total_tickets_desc'))
                 ->descriptionIcon('heroicon-m-ticket')
                 ->color('primary'),
 
-            Stat::make('Open Tickets', Ticket::whereHas('status', fn (Builder $query) => $query->where('is_closing_status', false))->count())
-                ->description('Tickets that require attention')
+            Stat::make(
+                __('creators-ticketing::resources.widgets.ticket_stats.open_tickets'), 
+                Ticket::whereHas('status', fn (Builder $query) => $query->where('is_closing_status', false))->count()
+            )
+                ->description(__('creators-ticketing::resources.widgets.ticket_stats.open_tickets_desc'))
                 ->descriptionIcon('heroicon-m-fire')
                 ->color('warning'),
 
-            Stat::make('Closed Tickets', Ticket::whereHas('status', fn (Builder $query) => $query->where('is_closing_status', true))->count())
-                ->description('Successfully resolved tickets')
+            Stat::make(
+                __('creators-ticketing::resources.widgets.ticket_stats.closed_tickets'), 
+                Ticket::whereHas('status', fn (Builder $query) => $query->where('is_closing_status', true))->count()
+            )
+                ->description(__('creators-ticketing::resources.widgets.ticket_stats.closed_tickets_desc'))
                 ->descriptionIcon('heroicon-m-check-badge')
                 ->color('success'),
         ];

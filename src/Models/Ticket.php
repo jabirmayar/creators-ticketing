@@ -95,6 +95,15 @@ class Ticket extends Model
         $this->saveQuietly();
     }
 
+    public function isUnseenBy($userId): bool
+    {
+        if (!$this->is_seen) {
+            return true;
+        }
+        
+        return $this->seen_by != $userId;
+    }
+
     public function getCustomField(string $fieldName)
     {
         return $this->custom_fields[$fieldName] ?? null;

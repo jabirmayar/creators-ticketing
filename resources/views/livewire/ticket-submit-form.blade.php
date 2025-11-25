@@ -29,10 +29,10 @@
         <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
             <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200 px-6 py-4">
                 <button wire:click="backToList" class="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-700 mb-3 transition">
-                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-4 h-4 mr-1 rtl:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                     </svg>
-                    Back to My Tickets
+                    {{ __('creators-ticketing::resources.frontend.back_to_list') }}
                 </button>
                 <div class="flex items-start justify-between">
                     <div>
@@ -71,7 +71,7 @@
                         <svg class="w-5 h-5 inline-block mr-2 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                         </svg>
-                        New Ticket
+                        {{ __('creators-ticketing::resources.frontend.new_ticket') }}
                     </button>
                     @if(auth()->check())
                         <button 
@@ -81,7 +81,7 @@
                             <svg class="w-5 h-5 inline-block mr-2 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
                             </svg>
-                            My Tickets
+                            {{ __('creators-ticketing::resources.frontend.my_tickets') }}
                             @if(count($userTickets) > 0)
                                 <span class="ml-2 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-bold rounded-full">{{ count($userTickets) }}</span>
                             @endif
@@ -94,21 +94,21 @@
         @if($showForm)
             <div class="bg-white border border-gray-200 rounded-xl shadow-sm">
                 <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200 px-6 py-5">
-                    <h2 class="text-xl font-bold text-gray-900">Submit a Support Ticket</h2>
-                    <p class="mt-1 text-sm text-gray-600">Fill out the form below and our team will respond as soon as possible.</p>
+                    <h2 class="text-xl font-bold text-gray-900">{{ __('creators-ticketing::resources.frontend.submit_ticket_title') }}</h2>
+                    <p class="mt-1 text-sm text-gray-600">{{ __('creators-ticketing::resources.frontend.submit_ticket_desc') }}</p>
                 </div>
 
                 <form wire:submit.prevent="submit" class="p-6 space-y-6">
                     <div>
                         <label for="department_id" class="block text-sm font-semibold text-gray-900 mb-2">
-                            Select Department <span class="text-red-500">*</span>
+                            {{ __('creators-ticketing::resources.frontend.select_department') }} <span class="text-red-500">*</span>
                         </label>
                         <select 
                             wire:model.live="department_id" 
                             id="department_id" 
                             class="block w-full px-4 py-3 rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition"
                         >
-                            <option value="">Choose a department...</option>
+                            <option value="">{{ __('creators-ticketing::resources.frontend.choose_department') }}</option>
                             @foreach($departments as $dept)
                                 <option value="{{ $dept->id }}">{{ $dept->name }}</option>
                             @endforeach
@@ -129,7 +129,7 @@
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
-                            <span class="text-sm font-medium">Loading form fields...</span>
+                            <span class="text-sm font-medium">{{ __('creators-ticketing::resources.frontend.loading_fields') }}</span>
                         </div>
                     </div>
 
@@ -140,7 +140,7 @@
                                     <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                     </svg>
-                                    Ticket Details
+                                    {{ __('creators-ticketing::resources.frontend.ticket_details') }}
                                 </h3>
                                 
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -188,7 +188,7 @@
                                                         id="field_{{ $field['name'] }}"
                                                         class="block w-full px-4 py-3 rounded-lg border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition @error("custom_fields.{$field['name']}") border-red-300 @enderror"
                                                     >
-                                                        <option value="">Select an option...</option>
+                                                        <option value="">{{ __('creators-ticketing::resources.frontend.select_option') }}</option>
                                                         @foreach($field['options'] ?? [] as $key => $value)
                                                             <option value="{{ $key }}">{{ $value }}</option>
                                                         @endforeach
@@ -272,8 +272,8 @@
                                                                 <svg class="w-10 h-10 mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                                                                 </svg>
-                                                                <p class="mb-2 text-sm text-gray-500"><span class="font-semibold">Click to upload</span> or drag and drop</p>
-                                                                <p class="text-xs text-gray-500">Multiple files allowed</p>
+                                                                <p class="mb-2 text-sm text-gray-500"><span class="font-semibold">{{ __('creators-ticketing::resources.frontend.upload_click') }}</span> {{ __('creators-ticketing::resources.frontend.upload_drag') }}</p>
+                                                                <p class="text-xs text-gray-500">{{ __('creators-ticketing::resources.frontend.upload_multiple') }}</p>
                                                             </div>
                                                             <input 
                                                                 type="file" 
@@ -289,7 +289,7 @@
                                                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                                         </svg>
-                                                        Uploading...
+                                                        {{ __('creators-ticketing::resources.frontend.uploading') }}
                                                     </div>
                                                     @break
                                             @endswitch
@@ -309,7 +309,7 @@
 
                             <div class="flex items-center justify-between pt-6 border-t border-gray-200">
                                 <p class="text-sm text-gray-500">
-                                    <span class="text-red-500">*</span> Required fields
+                                    <span class="text-red-500">*</span> {{ __('creators-ticketing::resources.frontend.required_fields') }}
                                 </p>
                                 <button 
                                     type="submit" 
@@ -321,8 +321,8 @@
                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                     </svg>
-                                    <span wire:loading.remove wire:target="submit">Submit Ticket</span>
-                                    <span wire:loading wire:target="submit">Submitting...</span>
+                                    <span wire:loading.remove wire:target="submit">{{ __('creators-ticketing::resources.frontend.submit_btn') }}</span>
+                                    <span wire:loading wire:target="submit">{{ __('creators-ticketing::resources.frontend.submitting_btn') }}</span>
                                 </button>
                             </div>
                         @elseif($department_id)
@@ -330,8 +330,8 @@
                                 <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                 </svg>
-                                <h3 class="mt-4 text-sm font-semibold text-gray-900">No form configured</h3>
-                                <p class="mt-2 text-sm text-gray-500">This department doesn't have a form set up yet.</p>
+                                <h3 class="mt-4 text-sm font-semibold text-gray-900">{{ __('creators-ticketing::resources.frontend.no_form_title') }}</h3>
+                                <p class="mt-2 text-sm text-gray-500">{{ __('creators-ticketing::resources.frontend.no_form_desc') }}</p>
                             </div>
                         @endif
                     </div>
@@ -375,7 +375,7 @@
                                     </div>
                                     @if($ticket->publicReplies->count() > 0)
                                         <span class="ml-4 flex-shrink-0 px-3 py-1.5 bg-blue-50 text-blue-700 text-sm font-semibold rounded-lg border border-blue-200">
-                                            {{ $ticket->publicReplies->count() }} {{ $ticket->publicReplies->count() === 1 ? 'reply' : 'replies' }}
+                                            {{ $ticket->publicReplies->count() }} {{ $ticket->publicReplies->count() === 1 ? __('creators-ticketing::resources.frontend.reply') : __('creators-ticketing::resources.frontend.replies') }}
                                         </span>
                                     @endif
                                 </div>
@@ -387,13 +387,13 @@
                         <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
                         </svg>
-                        <h3 class="mt-4 text-base font-semibold text-gray-900">No tickets yet</h3>
-                        <p class="mt-2 text-sm text-gray-500">Get started by creating your first support ticket.</p>
+                        <h3 class="mt-4 text-base font-semibold text-gray-900">{{ __('creators-ticketing::resources.frontend.no_tickets_title') }}</h3>
+                        <p class="mt-2 text-sm text-gray-500">{{ __('creators-ticketing::resources.frontend.no_tickets_desc') }}</p>
                         <button wire:click="$set('showForm', true)" class="mt-6 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                             </svg>
-                            Create New Ticket
+                            {{ __('creators-ticketing::resources.frontend.create_new_btn') }}
                         </button>
                     </div>
                 @endif

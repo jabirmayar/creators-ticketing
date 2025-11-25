@@ -47,6 +47,7 @@ class ViewTicket extends ViewRecord
     public function mount(int | string $record): void
     {
         parent::mount($record);
+        $this->record->markSeenBy(\Filament\Facades\Filament::auth()->id());
         $this->replyData = [
             'content' => '',
             'is_internal_note' => false,
@@ -61,20 +62,13 @@ class ViewTicket extends ViewRecord
                            (isset($permissions['permissions'][$recordDepartmentId]) && $permissions['permissions'][$recordDepartmentId]['can_change_status']);
 
         if (!$canChangeStatus) {
-            Notification::make()->title('Unauthorized')->danger()->body('You do not have permission to change ticket status.')->send();
+            Notification::make()->title(__('creators-ticketing::resources.ticket.notifications.unauthorized'))->danger()->body(__('creators-ticketing::resources.ticket.notifications.unauthorized_body_status'))->send();
             return;
         }
 
         $this->record->update(['ticket_status_id' => $statusId]);
         
-        $this->record->activities()->create([
-            'user_id' => Filament::auth()->id(),
-            'description' => 'Status changed',
-            'old_value' => $this->record->status?->name,
-            'new_value' => TicketStatus::find($statusId)?->name,
-        ]);
-        
-        Notification::make()->title('Status updated')->success()->send();
+        Notification::make()->title(__('creators-ticketing::resources.ticket.notifications.status_updated'))->success()->send();
         
         $this->dispatch('$refresh');
     }
@@ -87,21 +81,14 @@ class ViewTicket extends ViewRecord
                              (isset($permissions['permissions'][$recordDepartmentId]) && $permissions['permissions'][$recordDepartmentId]['can_change_priority']);
 
         if (!$canChangePriority) {
-            Notification::make()->title('Unauthorized')->danger()->body('You do not have permission to change ticket priority.')->send();
+            Notification::make()->title(__('creators-ticketing::resources.ticket.notifications.unauthorized'))->danger()->body(__('creators-ticketing::resources.ticket.notifications.unauthorized_body_priority'))->send();
             return;
         }
 
         $oldPriority = $this->record->priority;
         $this->record->update(['priority' => $priority]);
         
-        $this->record->activities()->create([
-            'user_id' => Filament::auth()->id(),
-            'description' => 'Priority changed',
-            'old_value' => $oldPriority?->getLabel(),
-            'new_value' => TicketPriority::from($priority)->getLabel(),
-        ]);
-        
-        Notification::make()->title('Priority updated')->success()->send();
+        Notification::make()->title(__('creators-ticketing::resources.ticket.notifications.priority_updated'))->success()->send();
         
         $this->dispatch('$refresh');
     }
@@ -114,19 +101,15 @@ class ViewTicket extends ViewRecord
                             (isset($permissions['permissions'][$recordDepartmentId]) && $permissions['permissions'][$recordDepartmentId]['can_assign_tickets']);
 
         if (!$canAssignTickets) {
-            Notification::make()->title('Unauthorized')->danger()->body('You do not have permission to assign tickets.')->send();
+            Notification::make()->title(__('creators-ticketing::resources.ticket.notifications.unauthorized'))->danger()->body(__('creators-ticketing::resources.ticket.notifications.unauthorized_body_assign'))->send();
             return;
         }
 
         $this->record->update(['assignee_id' => $assigneeId]);
+
+        $this->record->markSeenBy(Filament::auth()->id());
         
-        $this->record->activities()->create([
-            'user_id' => Filament::auth()->id(),
-            'description' => 'Ticket assigned',
-            'new_value' => User::find($assigneeId)?->name,
-        ]);
-        
-        Notification::make()->title('Ticket assigned')->success()->send();
+        Notification::make()->title(__('creators-ticketing::resources.ticket.notifications.assigned'))->success()->send();
         
         $this->dispatch('$refresh');
     }
@@ -145,11 +128,11 @@ class ViewTicket extends ViewRecord
                                (isset($permissions['permissions'][$recordDepartmentId]) && $permissions['permissions'][$recordDepartmentId]['can_add_internal_notes']);
 
         if (!$canReplyToTickets) {
-            Notification::make()->title('Unauthorized')->danger()->body('You do not have permission to reply to tickets.')->send();
+            Notification::make()->title(__('creators-ticketing::resources.ticket.notifications.unauthorized'))->danger()->body(__('creators-ticketing::resources.ticket.notifications.unauthorized_body_reply'))->send();
             return;
         }
         if (($this->replyData['is_internal_note'] ?? false) && !$canAddInternalNotes) {
-             Notification::make()->title('Unauthorized')->danger()->body('You do not have permission to add internal notes.')->send();
+             Notification::make()->title(__('creators-ticketing::resources.ticket.notifications.unauthorized'))->danger()->body(__('creators-ticketing::resources.ticket.notifications.unauthorized_body_internal'))->send();
             return;
         }
 
@@ -157,7 +140,7 @@ class ViewTicket extends ViewRecord
         
         if (empty(($data['content'] ?? ''))) {
             Notification::make()
-                ->title('Reply cannot be empty')
+                ->title(__('creators-ticketing::resources.ticket.notifications.reply_empty'))
                 ->danger()
                 ->send();
             return;
@@ -266,9 +249,9 @@ class ViewTicket extends ViewRecord
 
         if (!$canChangeDepartment) {
             Notification::make()
-                ->title('Unauthorized')
+                ->title(__('creators-ticketing::resources.ticket.notifications.unauthorized'))
                 ->danger()
-                ->body('You do not have permission to transfer tickets.')
+                ->body(__('creators-ticketing::resources.ticket.notifications.unauthorized_body_transfer'))
                 ->send();
             return;
         }
@@ -317,7 +300,7 @@ class ViewTicket extends ViewRecord
         ]);
 
         Notification::make()
-            ->title('Ticket transferred successfully')
+            ->title(__('creators-ticketing::resources.ticket.notifications.transferred'))
             ->success()
             ->body($activityDescription)
             ->send();
@@ -484,7 +467,7 @@ class ViewTicket extends ViewRecord
     protected function formatCustomFieldValue($value, $field): string
     {
         if ($field->type === 'checkbox' || $field->type === 'toggle') {
-            return $value ? 'Yes' : 'No';
+            return $value ? __('creators-ticketing::resources.ticket.yes') : __('creators-ticketing::resources.ticket.no');
         }
         
         if ($field->type === 'select' || $field->type === 'radio') {
@@ -533,7 +516,7 @@ class ViewTicket extends ViewRecord
             ->schema([
                 Tabs::make('Tabs')
                     ->tabs([
-                        Tab::make('Ticket View')
+                        Tab::make(__('creators-ticketing::resources.ticket.ticket_view'))
                             ->icon('heroicon-o-ticket')
                             ->schema([
                                 Group::make()
@@ -580,7 +563,7 @@ class ViewTicket extends ViewRecord
                                             ->columns(2)
                                             ->heading(false),
                                         
-                                        Section::make('Form Data')
+                                        Section::make(__('creators-ticketing::resources.ticket.form_data'))
                                             ->schema(fn() => $this->getCustomFieldsDisplay())
                                             ->columns(2)
                                             ->visible(fn() => count($this->getCustomFieldsDisplay()) > 0)
@@ -599,10 +582,10 @@ class ViewTicket extends ViewRecord
                                                     ->schema([
                                                         SchemaForm::make([
                                                             RichEditor::make('content')
-                                                                ->label('Add Reply')
+                                                                ->label(__('creators-ticketing::resources.ticket.add_reply'))
                                                                 ->required()
                                                                 ->columnSpanFull()
-                                                                ->placeholder('Write your reply here...')
+                                                                ->placeholder(__('creators-ticketing::resources.ticket.reply_placeholder'))
                                                                 ->toolbarButtons([
                                                                     ['bold', 'italic', 'underline', 'strike', 'subscript', 'superscript', 'link'],
                                                                     ['h2', 'h3', 'alignStart', 'alignCenter', 'alignEnd'],
@@ -621,14 +604,14 @@ class ViewTicket extends ViewRecord
                                                         ->footer([
                                                             SchemaActions::make([
                                                                 Toggle::make('is_internal_note')
-                                                                    ->label('Internal Note')
-                                                                    ->helperText('This reply will only be visible to agents.')
+                                                                    ->label(__('creators-ticketing::resources.ticket.internal_note'))
+                                                                    ->helperText(__('creators-ticketing::resources.ticket.internal_note_helper'))
                                                                     ->inline(true)
                                                                     ->default(false)
                                                                     ->visible(fn() => $canAddInternalNotes),
                                                                 Action::make('submitReply')
                                                                     ->submit('submitReply')
-                                                                    ->label('Submit')
+                                                                    ->label(__('creators-ticketing::resources.ticket.submit'))
                                                                     ->color('success')
                                                                     ->visible(fn() => $canReplyToTickets),
                                                             ]),
@@ -637,7 +620,7 @@ class ViewTicket extends ViewRecord
                                                     ->extraAttributes(['class' => 'border-t border-gray-700 pt-6 mt-0'])
                                                     ->visible(fn() => $canReplyToTickets),
                                             ])
-                                            ->heading('Conversation')
+                                            ->heading(__('creators-ticketing::resources.ticket.conversation'))
                                             ->icon('heroicon-o-chat-bubble-left-right')
                                             ->visible(fn() => $canReplyToTickets || $canAddInternalNotes || $canViewInternalNotes)
                                             ->compact(false),
@@ -646,39 +629,39 @@ class ViewTicket extends ViewRecord
                                 
                                 Group::make()
                                     ->schema([
-                                        Section::make('Ticket Details')
+                                        Section::make(__('creators-ticketing::resources.ticket.details'))
                                             ->icon('heroicon-o-document-text')
                                             ->schema([
                                                 TextEntry::make('ticket_uid')
-                                                    ->label('Ticket No')
+                                                    ->label(__('creators-ticketing::resources.ticket.ticket_no'))
                                                     ->copyable()
                                                     ->icon('heroicon-o-hashtag'),
                                                 
                                                 TextEntry::make('department.name')
-                                                    ->label('Department')
+                                                    ->label(__('creators-ticketing::resources.ticket.department'))
                                                     ->icon('heroicon-o-building-office-2')
                                                     ->color('success'),
                                                 
                                                 TextEntry::make('created_at')
-                                                    ->label('Created at')
+                                                    ->label(__('creators-ticketing::resources.ticket.created_at'))
                                                     ->dateTime('M d, Y H:i:s')
                                                     ->icon('heroicon-o-clock')
                                                     ->color('success'),
                                                 
                                                 TextEntry::make('updated_at')
-                                                    ->label('Updated at')
+                                                    ->label(__('creators-ticketing::resources.ticket.updated_at'))
                                                     ->dateTime('M d, Y H:i:s')
                                                     ->icon('heroicon-o-clock')
                                                     ->color('success'),
                                                 
                                                 TextEntry::make('assignee.name')
-                                                    ->label('Assigned to')
-                                                    ->default('Unassigned')
+                                                    ->label(__('creators-ticketing::resources.ticket.assignee'))
+                                                    ->default(__('creators-ticketing::resources.ticket.unassigned'))
                                                     ->icon('heroicon-o-user-plus')
                                                     ->color('success'),
                                                 
                                                 TextEntry::make('last_activity_at')
-                                                    ->label('Last Activity')
+                                                    ->label(__('creators-ticketing::resources.ticket.last_activity'))
                                                     ->formatStateUsing(fn($record) => $this->getLastActivityDescription($record))
                                                     ->icon('heroicon-o-clock')
                                                     ->color('danger')
@@ -687,12 +670,14 @@ class ViewTicket extends ViewRecord
                                             ->compact()
                                             ->collapsible(),
                                         
-                                        Section::make('Recent Activities')
+                                        Section::make(__('creators-ticketing::resources.ticket.recent_activities'))
                                             ->icon('heroicon-o-clock')
-                                            ->description('Last 5 activities')
+                                            ->description(__('creators-ticketing::resources.ticket.latest_activities'))
                                             ->schema([
-                                                Livewire::make(TicketTimeline::class, ['ticket' => $this->record])
-                                                    ->key(fn() => 'timeline-preview-' . $this->record->id),
+                                                 Livewire::make(TicketTimeline::class, [
+                                                    'ticket' => $this->record,
+                                                    'limit' => 5
+                                                ])->key(fn() => 'timeline-preview-' . $this->record->id),
                                             ])
                                             ->collapsed()
                                             ->collapsible(),
@@ -701,12 +686,12 @@ class ViewTicket extends ViewRecord
                             ])
                             ->columns(3),
                         
-                        Tab::make('Full Timeline')
+                        Tab::make(__('creators-ticketing::resources.ticket.full_timeline'))
                             ->icon('heroicon-o-clock')
                             ->schema([
-                                Section::make('Activity Timeline')
+                                Section::make(__('creators-ticketing::resources.ticket.activity_timeline'))
                                     ->icon('heroicon-o-clock')
-                                    ->description('Complete activity history')
+                                    ->description(__('creators-ticketing::resources.ticket.activities_history'))
                                     ->schema([
                                         Livewire::make(TicketTimeline::class, ['ticket' => $this->record])
                                             ->key(fn() => 'timeline-full-' . $this->record->id),
@@ -762,21 +747,21 @@ class ViewTicket extends ViewRecord
 
         return [
             ActionGroup::make($statusActions)
-                ->label('Change Status')
+                ->label(__('creators-ticketing::resources.ticket.actions.change_status'))
                 ->icon('heroicon-o-arrow-path')
                 ->color('gray')
                 ->button()
                 ->visible(fn() => $canChangeStatus),
             
             ActionGroup::make($priorityActions)
-                ->label('Change Priority')
+                ->label(__('creators-ticketing::resources.ticket.actions.change_priority'))
                 ->icon('heroicon-o-flag')
                 ->color('gray')
                 ->button()
                 ->visible(fn() => $canChangePriority),
             
             Action::make('assignTicket')
-                ->label('Assign')
+                ->label(__('creators-ticketing::resources.ticket.actions.assign'))
                 ->icon('heroicon-o-user-plus')
                 ->color('gray')
                 ->button()
@@ -784,17 +769,18 @@ class ViewTicket extends ViewRecord
                 ->form([
                    (config('creators-ticketing.ticket_assign_scope') === 'department_only') 
                            ? Select::make('assignee')
-                                    ->label('Select Assignee')
+                                    ->label(__('creators-ticketing::resources.ticket.actions.select_assignee'))
                                     ->searchable()
-                                    ->getSearchResultsUsing(function (string $search, Component $component) use ($userModel) {
-                                        $departmentId = $component->getLivewire()->record->department_id;
+                                    ->getSearchResultsUsing(function (string $search) {
+                                        $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
+                                        $departmentId = $this->record->department_id;
+                                        $userInstance = new $userModel;
+                                        $userKey = $userInstance->getKeyName();
+                                        $pivotUserColumn = "user_{$userKey}";
 
                                         return $userModel::when(
                                             config('creators-ticketing.ticket_assign_scope') === 'department_only' && $departmentId !== null,
-                                            fn ($query) => $query->whereExists(function ($subquery) use ($departmentId) {
-                                                $userInstance = new $userModel;
-                                                $userKey = $userInstance->getKeyName();
-                                                $pivotUserColumn = "user_{$userKey}";
+                                            fn ($query) => $query->whereExists(function ($subquery) use ($departmentId, $pivotUserColumn, $userKey) {
                                                 $subquery->select(DB::raw(1))
                                                     ->from(config('creators-ticketing.table_prefix') . 'department_users')
                                                     ->whereColumn(
@@ -802,7 +788,6 @@ class ViewTicket extends ViewRecord
                                                         "users.{$userKey}"
                                                     )
                                                     ->where(config('creators-ticketing.table_prefix') . 'department_users.department_id', $departmentId);
-
                                             })
                                         )
                                         ->where(fn ($query) => $query->where('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%"))
@@ -810,12 +795,14 @@ class ViewTicket extends ViewRecord
                                         ->get()
                                         ->mapWithKeys(fn($user) => [$user->id => $user->name . ' - ' . $user->email]);
                                     })
-                                    ->getOptionLabelUsing(fn ($value): ?string => 
-                                        $userModel::find($value)?->name . ' - ' . $userModel::find($value)?->email
-                                    )
-                                    ->options(function (Component $component) use ($userModel): array {
+                                    ->getOptionLabelUsing(function ($value) {
+                                        $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
+                                        return $userModel::find($value)?->name . ' - ' . $userModel::find($value)?->email;
+                                    })
+                                    ->options(function () {
+                                        $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
                                         if (config('creators-ticketing.ticket_assign_scope') === 'department_only') {
-                                            $departmentId = $component->getLivewire()->record->department_id;
+                                            $departmentId = $this->record->department_id;
                                             if ($departmentId) {
                                                 return Department::find($departmentId)?->agents->mapWithKeys(fn($user) => [$user->id => $user->name . ' - ' . $user->email])->toArray() ?? [];
                                             }
@@ -826,26 +813,28 @@ class ViewTicket extends ViewRecord
                                             ->toArray();
                                     })
                                     ->default($this->record->assignee_id)
-                                    ->preload(fn(Component $component) => config('creators-ticketing.ticket_assign_scope') === 'department_only' && $component->getLivewire()->record->department_id !== null)
-                                    ->required()
+                                    ->preload(fn() => config('creators-ticketing.ticket_assign_scope') === 'department_only' && $this->record->department_id !== null)
+                                    ->placeholder(__('creators-ticketing::resources.ticket.unassigned'))
                                     ->native(false)
                         
                             :   Select::make('assignee')
-                                    ->label('Select Assignee')
+                                    ->label(__('creators-ticketing::resources.ticket.actions.select_assignee'))
                                     ->searchable()
-                                    ->getSearchResultsUsing(function (string $search) use ($userModel) {
+                                    ->getSearchResultsUsing(function (string $search) {
+                                        $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
                                         return $userModel::where('name', 'like', "%{$search}%")
                                             ->orWhere('email', 'like', "%{$search}%")
                                             ->limit(50)
                                             ->get()
                                             ->mapWithKeys(fn($user) => [$user->id => $user->name . ' - ' . $user->email]);
                                     })
-                                    ->getOptionLabelUsing(fn ($value): ?string => 
-                                        $userModel::find($value)?->name . ' - ' . $userModel::find($value)?->email
-                                    )
+                                    ->getOptionLabelUsing(function ($value) {
+                                        $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
+                                        return $userModel::find($value)?->name . ' - ' . $userModel::find($value)?->email;
+                                    })
                                     ->default($this->record->assignee_id)
                                     ->preload(false)
-                                    ->required()
+                                    ->placeholder(__('creators-ticketing::resources.ticket.unassigned'))
                                     ->native(false),
                 ])
                 ->action(function (array $data) {
@@ -853,14 +842,14 @@ class ViewTicket extends ViewRecord
                 }),
 
             Action::make('transferTicket')
-                ->label('Transfer')
+                ->label(__('creators-ticketing::resources.ticket.actions.transfer'))
                 ->icon('heroicon-o-arrow-path-rounded-square')
                 ->color('warning')
                 ->button()
                 ->visible(fn() => $canChangeDepartment)
                 ->form([
                 Select::make('department')
-                    ->label('Transfer to Department')
+                    ->label(__('creators-ticketing::resources.ticket.actions.transfer_dept'))
                     ->options(function () use ($permissions) {
                         if ($permissions['is_admin']) {
                             return Department::where('is_active', true)
@@ -880,12 +869,12 @@ class ViewTicket extends ViewRecord
                     ->required()
                     ->searchable()
                     ->live()
-                    ->helperText('Select the department to transfer this ticket to.')
+                    ->helperText(__('creators-ticketing::resources.ticket.actions.transfer_dept_helper'))
                     ->native(false),
                 
                     Select::make('assignee')
-                        ->label('Assign to Agent')
-                        ->placeholder('Keep current assignee if available, otherwise unassigned')
+                        ->label(__('creators-ticketing::resources.ticket.actions.transfer_agent'))
+                        ->placeholder(__('creators-ticketing::resources.ticket.actions.transfer_agent_placeholder'))
                         ->searchable()
                         ->getSearchResultsUsing(function (string $search, Get $get) use ($userModel) {
                             $departmentId = $get('department');
@@ -936,7 +925,7 @@ class ViewTicket extends ViewRecord
                             return $isInNewDept ? $currentAssigneeId : null;
                         })
                         ->preload(fn(Get $get) => $get('department') !== null)
-                        ->helperText('Leave empty to keep current assignee (if they are in the new department) or leave unassigned.')
+                        ->helperText(__('creators-ticketing::resources.ticket.actions.transfer_agent_helper'))
                         ->native(false),
                     ])
                     ->action(function (array $data) {
@@ -946,13 +935,13 @@ class ViewTicket extends ViewRecord
                             empty($data['assignee'])
                         );
                     })
-                ->modalHeading('Transfer Ticket')
-                ->modalDescription('Transfer this ticket to another department. Current assignee will be kept if they exist in the new department.')
-                ->modalSubmitActionLabel('Transfer')
+                ->modalHeading(__('creators-ticketing::resources.ticket.actions.transfer_modal_heading'))
+                ->modalDescription(__('creators-ticketing::resources.ticket.actions.transfer_modal_desc'))
+                ->modalSubmitActionLabel(__('creators-ticketing::resources.ticket.actions.transfer_submit'))
                 ->modalWidth('md'),
             
             Action::make('delete')
-                ->label('Delete')
+                ->label(__('creators-ticketing::resources.ticket.actions.delete'))
                 ->icon('heroicon-o-trash')
                 ->color('danger')
                 ->requiresConfirmation()

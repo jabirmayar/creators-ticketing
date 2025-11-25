@@ -18,7 +18,7 @@ A robust and dynamic ticketing system plugin for Filament 4, providing a complet
 *Submit Ticket Form*
 
 ![User Tickets List](screenshots/user-tickets-list.png)
-*User's Tickets List*```
+*User's Tickets List*
 
 ## Features
 
@@ -28,8 +28,10 @@ A robust and dynamic ticketing system plugin for Filament 4, providing a complet
 - Real-time ticket chat using Livewire
 - Ticket statistics dashboard widget
 - Granular permission system
+- Read/Unread status indicators for agents
 - File attachments support
 - Responsive design
+- Multi-language support
 - Seamless integration with Filament 4
 
 ## Requirements
@@ -60,7 +62,7 @@ Open your AdminPanelProvider.php file and modify the panel() method as shown bel
 ```
 app/Providers/Filament/AdminPanelProvider.php
 ```
-```
+```php
 use Filament\Panel;
 use Filament\PanelProvider;
 use daacreators\CreatorsTicketing\TicketingPlugin; // Add this line
@@ -115,6 +117,27 @@ You can control who sees the ticketing resources in the admin panel by configuri
 ],
 ```
 
+## Multi-language Support
+
+This plugin is fully localized and supports multiple languages out of the box. It automatically detects and uses your application's current locale configuration (`config/app.php`).
+
+**Currently supported languages:**
+
+- 🇺🇸 **English** (`en`) - Default
+- 🇪🇸 **Spanish** (`es`)
+- 🇧🇷 **Portuguese (Brazil)** (`pt_BR`)
+- 🇫🇷 **French** (`fr`)
+- 🇩🇪 **German** (`de`)
+- 🇸🇦 **Arabic** (`ar`)
+- 🇨🇳 **Chinese (Simplified)** (`zh_CN`)
+
+### Publishing Translations
+If you wish to modify the texts or add a new language, you can publish the translation files:
+
+```bash
+php artisan vendor:publish --tag="creators-ticketing-translations"
+```
+
 ## Usage
 
 ### Creating Forms
@@ -132,7 +155,7 @@ You can control who sees the ticketing resources in the admin panel by configuri
 ### Managing Tickets
 
 Tickets can be managed through the Filament admin panel. You can:
-- View all tickets
+- View all tickets **(New updates are marked with a "NEW" badge)**
 - Assign tickets to agents
 - Change ticket status
 - Add internal notes

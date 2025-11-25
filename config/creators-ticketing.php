@@ -56,7 +56,7 @@ return [
     | - 'any_user' => Tickets can be assigned to any user in the system.
     |
     */
-    'ticket_assign_scope' => env('TICKET_ASSIGN_SCOPE', 'department_only'),
+    'ticket_assign_scope' => env('TICKET_ASSIGN_SCOPE', 'any_user'),
 
     /*
     |--------------------------------------------------------------------------

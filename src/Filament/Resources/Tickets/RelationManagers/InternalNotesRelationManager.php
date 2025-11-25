@@ -9,17 +9,22 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\Layout\Stack;
 use Filament\Tables\Columns\Layout\Split;
 use Filament\Resources\RelationManagers\RelationManager;
+use Illuminate\Database\Eloquent\Model;
 
 class InternalNotesRelationManager extends RelationManager
 {
     protected static string $relationship = 'internalNotes';
-    protected static ?string $title = 'Internal Notes';
+    
+    public static function getTitle(Model $ownerRecord, string $pageClass): string
+    {
+        return __('creators-ticketing::resources.internal_note.title');
+    }
 
     public function table(Table $table): Table
     {
         return $table
-            ->heading('Internal Notes')
-            ->description('Private notes visible only to support agents.')
+            ->heading(__('creators-ticketing::resources.internal_note.heading'))
+            ->description(__('creators-ticketing::resources.internal_note.description'))
             ->columns([
                 Stack::make([
                     Split::make([
@@ -28,7 +33,7 @@ class InternalNotesRelationManager extends RelationManager
                             ->badge()
                             ->color('warning')
                             ->weight(FontWeight::Bold)
-                            ->formatStateUsing(fn($state) => "{$state} • Agent Note"),
+                            ->formatStateUsing(fn($state) => "{$state} • " . __('creators-ticketing::resources.internal_note.agent_note')),
 
                         TextColumn::make('created_at')
                             ->since()
@@ -60,8 +65,8 @@ class InternalNotesRelationManager extends RelationManager
             ->bulkActions([])
             ->headerActions([])
             ->contentGrid(['md' => 1])
-            ->emptyStateHeading('No internal notes yet')
-            ->emptyStateDescription('Add private notes visible only to support agents.')
+            ->emptyStateHeading(__('creators-ticketing::resources.internal_note.empty_heading'))
+            ->emptyStateDescription(__('creators-ticketing::resources.internal_note.empty_desc'))
             ->extraAttributes([
                 'class' => '
                     divide-y divide-gray-200/10 dark:divide-gray-800/30

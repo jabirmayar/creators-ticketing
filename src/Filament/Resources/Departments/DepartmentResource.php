@@ -35,43 +35,63 @@ class DepartmentResource extends Resource
 
     protected static BackedEnum|string|null $navigationIcon = 'heroicon-o-building-office-2';
 
+    public static function getNavigationLabel(): string
+    {
+        return __('creators-ticketing::resources.department.title');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('creators-ticketing::resources.department.label');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('creators-ticketing::resources.department.title');
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema->schema([
             TextInput::make('name')
+                ->label(__('creators-ticketing::resources.department.name'))
                 ->required()
                 ->maxLength(255)
                 ->live(onBlur: true)
                 ->afterStateUpdated(fn (Set $set, ?string $state) => $set('slug', Str::slug($state))),
 
             TextInput::make('slug')
+                ->label(__('creators-ticketing::resources.department.slug'))
                 ->required()
                 ->maxLength(255)
                 ->unique(Department::class, 'slug', ignoreRecord: true),
 
             Select::make('visibility')
+                ->label(__('creators-ticketing::resources.department.visibility'))
                 ->required()
                 ->options([
-                    'public' => 'Public',
-                    'internal' => 'Internal',
+                    'public' => __('creators-ticketing::resources.department.visibility_options.public'),
+                    'internal' => __('creators-ticketing::resources.department.visibility_options.internal'),
                 ])
                 ->default('public')
-                ->helperText('Public departments are visible to all users, internal departments are for staff only'),
+                ->helperText(__('creators-ticketing::resources.department.visibility_helper')),
 
             Select::make('form_id')
-                ->label('Ticket Form')
+                ->label(__('creators-ticketing::resources.department.form'))
                 ->options(Form::where('is_active', true)->pluck('name', 'id'))
                 ->searchable()
                 ->preload()
-                ->helperText('Select the form to use for tickets in this department')
+                ->helperText(__('creators-ticketing::resources.department.form_helper'))
                 ->dehydrated(false),
 
             Textarea::make('description')
+                ->label(__('creators-ticketing::resources.department.description'))
                 ->rows(3)
                 ->maxLength(65535)
                 ->columnSpanFull(),
 
             Toggle::make('is_active')
+                ->label(__('creators-ticketing::resources.department.is_active'))
                 ->required()
                 ->default(true),
         ]);
@@ -82,45 +102,57 @@ class DepartmentResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('name')
+                    ->label(__('creators-ticketing::resources.department.name'))
                     ->searchable()
                     ->sortable(),
 
-                TextColumn::make('slug'),
+                TextColumn::make('slug')
+                    ->label(__('creators-ticketing::resources.department.slug')),
 
                 TextColumn::make('form_name')
-                    ->label('Form')
+                    ->label(__('creators-ticketing::resources.department.form'))
                     ->badge()
                     ->color('info')
                     ->getStateUsing(function (Department $record) {
-                        return $record->forms()->first()?->name ?? 'None';
+                        return $record->forms()->first()?->name ?? __('creators-ticketing::resources.department.form_none');
                     }),
 
                 TextColumn::make('visibility')
+                    ->label(__('creators-ticketing::resources.department.visibility'))
                     ->badge()
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'public' => __('creators-ticketing::resources.department.visibility_options.public'),
+                        'internal' => __('creators-ticketing::resources.department.visibility_options.internal'),
+                        default => $state,
+                    })
                     ->color(fn (string $state): string => match ($state) {
                         'public' => 'success',
                         'internal' => 'warning',
+                        default => 'gray',
                     }),
 
                 IconColumn::make('is_active')
+                    ->label(__('creators-ticketing::resources.department.is_active'))
                     ->boolean(),
 
                 TextColumn::make('created_at')
+                    ->label(__('creators-ticketing::resources.department.created_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 SelectFilter::make('visibility')
+                    ->label(__('creators-ticketing::resources.department.visibility'))
                     ->options([
-                        'public' => 'Public',
-                        'internal' => 'Internal',
+                        'public' => __('creators-ticketing::resources.department.visibility_options.public'),
+                        'internal' => __('creators-ticketing::resources.department.visibility_options.internal'),
                     ]),
                 TernaryFilter::make('is_active')
-                    ->label('Active')
+                    ->label(__('creators-ticketing::resources.form.filters.active'))
                     ->boolean()
-                    ->trueLabel('Active only')
-                    ->falseLabel('Inactive only')
+                    ->trueLabel(__('creators-ticketing::resources.form.filters.active_only'))
+                    ->falseLabel(__('creators-ticketing::resources.form.filters.inactive_only'))
                     ->native(false),
             ])
             ->actions([

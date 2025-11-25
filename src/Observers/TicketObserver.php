@@ -30,6 +30,10 @@ class TicketObserver
         if (empty($ticket->last_activity_at)) {
             $ticket->last_activity_at = now();
         }
+
+        $ticket->is_seen = false;
+        $ticket->seen_by = null;
+        $ticket->seen_at = null;
     }
 
     public function created(Ticket $ticket): void
@@ -38,10 +42,6 @@ class TicketObserver
             'user_id' => auth()->id(),
             'description' => 'Ticket was created',
         ]);
-        // mark ticket as seen by creator
-        if (auth()->check()) {
-            $ticket->markSeenBy(auth()->id());
-        }
     }
 
     public function updating(Ticket $ticket): void
@@ -50,48 +50,49 @@ class TicketObserver
             $oldAssigneeId = $ticket->getOriginal('assignee_id');
             $newAssigneeId = $ticket->assignee_id;
             
-            if ($oldAssigneeId !== $newAssigneeId) {
-                $oldAssignee = User::find($oldAssigneeId);
-                $newAssignee = User::find($newAssigneeId);
+            $oldAssignee = $oldAssigneeId ? User::find($oldAssigneeId) : null;
+            $newAssignee = $newAssigneeId ? User::find($newAssigneeId) : null;
 
-                $ticket->activities()->create([
-                    'user_id' => auth()->id(),
-                    'description' => 'Ticket was assigned',
-                    'old_value' => $oldAssignee?->name ?? 'Unassigned',
-                    'new_value' => $newAssignee?->name ?? 'Unassigned',
-                ]);
-            }
+            $ticket->activities()->create([
+                'user_id' => auth()->id(),
+                'description' => 'Ticket was assigned',
+                'old_value' => $oldAssignee?->name ?? 'Unassigned',
+                'new_value' => $newAssignee?->name ?? 'Unassigned',
+            ]);
         }
 
         if ($ticket->isDirty('ticket_status_id')) {
             $oldStatusId = $ticket->getOriginal('ticket_status_id');
             $newStatusId = $ticket->ticket_status_id;
             
-            if ($oldStatusId !== $newStatusId) {
-                $oldStatus = TicketStatus::find($oldStatusId);
-                $newStatus = TicketStatus::find($newStatusId);
+            $oldStatus = TicketStatus::find($oldStatusId);
+            $newStatus = TicketStatus::find($newStatusId);
 
-                $ticket->activities()->create([
-                    'user_id' => auth()->id(),
-                    'description' => 'Status was changed',
-                    'old_value' => $oldStatus?->name,
-                    'new_value' => $newStatus?->name,
-                ]);
-            }
+            $ticket->activities()->create([
+                'user_id' => auth()->id(),
+                'description' => 'Status was changed',
+                'old_value' => $oldStatus?->name,
+                'new_value' => $newStatus?->name,
+            ]);
         }
 
         if ($ticket->isDirty('priority')) {
             $oldPriority = $ticket->getOriginal('priority');
             $newPriority = $ticket->priority;
             
-            if ($oldPriority !== $newPriority) {
-                $ticket->activities()->create([
-                    'user_id' => auth()->id(),
-                    'description' => 'Priority was changed',
-                    'old_value' => $oldPriority,
-                    'new_value' => $newPriority,
-                ]);
+            if ($oldPriority instanceof TicketPriority) {
+                $oldPriority = $oldPriority->getLabel();
             }
+            if ($newPriority instanceof TicketPriority) {
+                $newPriority = $newPriority->getLabel();
+            }
+
+            $ticket->activities()->create([
+                'user_id' => auth()->id(),
+                'description' => 'Priority was changed',
+                'old_value' => $oldPriority,
+                'new_value' => $newPriority,
+            ]);
         }
     }
 
@@ -107,13 +108,14 @@ class TicketObserver
 
         $ticket->last_activity_at = now();
         $ticket->saveQuietly();
-        // ensure reply stored as unseen for other users and ticket is flagged unseen
+
         if ($reply instanceof \Daacreators\CreatorsTicketing\Models\TicketReply) {
             $reply->is_seen = false;
             $reply->seen_by = null;
             $reply->seen_at = null;
             $reply->saveQuietly();
         }
+        
         $ticket->markUnseen();
     }
 
@@ -132,6 +134,5 @@ class TicketObserver
 
         return $uid;
     }
-
 
 }

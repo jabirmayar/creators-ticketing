@@ -26,6 +26,12 @@ class TicketingServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $this->loadTranslationsFrom(__DIR__ . '/../resources/lang', 'creators-ticketing');
+
+        $this->publishes([
+            __DIR__ . '/../resources/lang' => $this->app->langPath('vendor/creators-ticketing'),
+        ], 'creators-ticketing-translations');
+
         $this->publishes([
            __DIR__.'/../config/creators-ticketing.php' => config_path('creators-ticketing.php'),
         ], 'creators-ticketing-config');

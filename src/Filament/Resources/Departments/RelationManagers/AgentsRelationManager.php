@@ -27,6 +27,11 @@ class AgentsRelationManager extends RelationManager
 
     protected static ?string $recordTitleAttribute = 'name';
 
+    public static function getTitle(Model $ownerRecord, string $pageClass): string
+    {
+        return __('creators-ticketing::resources.agent.title');
+    }
+
     public function table(Table $table): Table
     {
         $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
@@ -35,16 +40,24 @@ class AgentsRelationManager extends RelationManager
             ->recordTitleAttribute('name')
             ->columns([
                 TextColumn::make('name')
+                    ->label(__('creators-ticketing::resources.agent.name'))
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('email')
+                    ->label(__('creators-ticketing::resources.agent.email'))
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('pivot.role')
-                    ->label('Role')
+                    ->label(__('creators-ticketing::resources.agent.role'))
                     ->badge()
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'admin' => __('creators-ticketing::resources.agent.roles.admin'),
+                        'editor' => __('creators-ticketing::resources.agent.roles.editor'),
+                        'agent' => __('creators-ticketing::resources.agent.roles.agent'),
+                        default => $state,
+                    })
                     ->color(fn (string $state): string => match ($state) {
                         'admin' => 'danger',
                         'editor' => 'warning',
@@ -53,37 +66,38 @@ class AgentsRelationManager extends RelationManager
                     }),
 
                 IconColumn::make('pivot.can_create_tickets')
-                    ->label('Create')
+                    ->label(__('creators-ticketing::resources.agent.columns.create'))
                     ->boolean(),
                 IconColumn::make('pivot.can_view_all_tickets')
-                    ->label('View All')
+                    ->label(__('creators-ticketing::resources.agent.columns.view_all'))
                     ->boolean(),
                 IconColumn::make('pivot.can_assign_tickets')
-                    ->label('Assign')
+                    ->label(__('creators-ticketing::resources.agent.columns.assign'))
                     ->boolean(),
                 IconColumn::make('pivot.can_change_departments')
-                    ->label('Change Department')
+                    ->label(__('creators-ticketing::resources.agent.columns.change_dept'))
                     ->boolean(),
                 IconColumn::make('pivot.can_change_status')
-                    ->label('Status')
+                    ->label(__('creators-ticketing::resources.agent.columns.status'))
                     ->boolean(),
                 IconColumn::make('pivot.can_change_priority')
-                    ->label('Priority')
+                    ->label(__('creators-ticketing::resources.agent.columns.priority'))
                     ->boolean(),
                 IconColumn::make('pivot.can_reply_to_tickets')
-                    ->label('Reply')
+                    ->label(__('creators-ticketing::resources.agent.columns.reply'))
                     ->boolean(),
                 IconColumn::make('pivot.can_add_internal_notes')
-                    ->label('Add Notes')
+                    ->label(__('creators-ticketing::resources.agent.columns.add_notes'))
                     ->boolean(),
                 IconColumn::make('pivot.can_view_internal_notes')
-                    ->label('View Notes')
+                    ->label(__('creators-ticketing::resources.agent.columns.view_notes'))
                     ->boolean(),
                 IconColumn::make('pivot.can_delete_tickets')
-                    ->label('Delete')
+                    ->label(__('creators-ticketing::resources.agent.columns.delete'))
                     ->boolean(),
 
                 TextColumn::make('created_at')
+                    ->label(__('creators-ticketing::resources.form.created_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -91,9 +105,10 @@ class AgentsRelationManager extends RelationManager
             ->filters([])
             ->headerActions([
                 Action::make('Add Users')
+                        ->label(__('creators-ticketing::resources.agent.add_agents'))
                         ->form([
                             Select::make('user_id')
-                                ->label('Agent')
+                                ->label(__('creators-ticketing::resources.agent.select_agent'))
                                 ->searchable()
                                 ->multiple()
                                 ->getSearchResultsUsing(function (string $search) use ($userModel) {
@@ -117,11 +132,11 @@ class AgentsRelationManager extends RelationManager
                                 ->preload(false)
                                 ->required(),
                             Select::make('role')
-                                ->label('Role')
+                                ->label(__('creators-ticketing::resources.agent.role'))
                                 ->options([
-                                    'admin' => 'Department Admin',
-                                    'editor' => 'Editor',
-                                    'agent' => 'Agent',
+                                    'admin' => __('creators-ticketing::resources.agent.roles.admin'),
+                                    'editor' => __('creators-ticketing::resources.agent.roles.editor'),
+                                    'agent' => __('creators-ticketing::resources.agent.roles.agent'),
                                 ])
                                 ->default(null)
                                 ->live()
@@ -163,37 +178,38 @@ class AgentsRelationManager extends RelationManager
                                 })
                                 ->required(),
                             Section::make('Permissions')
+                                ->label(__('creators-ticketing::resources.agent.permissions_section'))
                                 ->schema([
                                     Toggle::make('can_create_tickets')
-                                            ->label('Create tickets')
-                                            ->helperText('Can create tickets in this department.'),
+                                            ->label(__('creators-ticketing::resources.agent.permissions.can_create_tickets'))
+                                            ->helperText(__('creators-ticketing::resources.agent.permissions.can_create_tickets_helper')),
                                     Toggle::make('can_view_all_tickets')
-                                        ->label('View all department tickets')
-                                        ->helperText('Can view all tickets in this department, not just assigned ones.'),
+                                        ->label(__('creators-ticketing::resources.agent.permissions.can_view_all_tickets'))
+                                        ->helperText(__('creators-ticketing::resources.agent.permissions.can_view_all_tickets_helper')),
                                     Toggle::make('can_assign_tickets')
-                                        ->label('Assign tickets')
-                                        ->helperText('Can assign tickets to other agents.'),
+                                        ->label(__('creators-ticketing::resources.agent.permissions.can_assign_tickets'))
+                                        ->helperText(__('creators-ticketing::resources.agent.permissions.can_assign_tickets_helper')),
                                     Toggle::make('can_change_departments')
-                                        ->label('Change ticket department')
-                                        ->helperText('Can change the department of tickets.'),
+                                        ->label(__('creators-ticketing::resources.agent.permissions.can_change_departments'))
+                                        ->helperText(__('creators-ticketing::resources.agent.permissions.can_change_departments_helper')),
                                     Toggle::make('can_change_status')
-                                        ->label('Change ticket status')
-                                        ->helperText('Can change the status of tickets.'),
+                                        ->label(__('creators-ticketing::resources.agent.permissions.can_change_status'))
+                                        ->helperText(__('creators-ticketing::resources.agent.permissions.can_change_status_helper')),
                                     Toggle::make('can_change_priority')
-                                        ->label('Change ticket priority')
-                                        ->helperText('Can change the priority of tickets.'),
+                                        ->label(__('creators-ticketing::resources.agent.permissions.can_change_priority'))
+                                        ->helperText(__('creators-ticketing::resources.agent.permissions.can_change_priority_helper')),
                                     Toggle::make('can_reply_to_tickets')
-                                        ->label('Reply to tickets')
-                                        ->helperText('Can send public replies to tickets.'),
+                                        ->label(__('creators-ticketing::resources.agent.permissions.can_reply_to_tickets'))
+                                        ->helperText(__('creators-ticketing::resources.agent.permissions.can_reply_to_tickets_helper')),
                                     Toggle::make('can_add_internal_notes')
-                                        ->label('Add internal notes')
-                                        ->helperText('Can add internal notes on tickets.'),
+                                        ->label(__('creators-ticketing::resources.agent.permissions.can_add_internal_notes'))
+                                        ->helperText(__('creators-ticketing::resources.agent.permissions.can_add_internal_notes_helper')),
                                     Toggle::make('can_view_internal_notes')
-                                        ->label('View internal notes')
-                                        ->helperText('Can view internal notes on tickets.'),
+                                        ->label(__('creators-ticketing::resources.agent.permissions.can_view_internal_notes'))
+                                        ->helperText(__('creators-ticketing::resources.agent.permissions.can_view_internal_notes_helper')),
                                     Toggle::make('can_delete_tickets')
-                                        ->label('Delete tickets')
-                                        ->helperText('Can delete tickets (use with caution).'),
+                                        ->label(__('creators-ticketing::resources.agent.permissions.can_delete_tickets'))
+                                        ->helperText(__('creators-ticketing::resources.agent.permissions.can_delete_tickets_helper')),
                                 ])
                                 ->columns(2),
                         ])
@@ -206,8 +222,8 @@ class AgentsRelationManager extends RelationManager
                             if (empty($newAgentIds)) {
                                 Notification::make()
                                     ->warning()
-                                    ->title('No new agents to attach')
-                                    ->body('Selected agents are already attached to this department.')
+                                    ->title(__('creators-ticketing::resources.agent.notifications.no_new_title'))
+                                    ->body(__('creators-ticketing::resources.agent.notifications.no_new_body'))
                                     ->send();
                                 return;
                             }
@@ -239,24 +255,24 @@ class AgentsRelationManager extends RelationManager
 
                             Notification::make()
                                 ->success()
-                                ->title('Agents attached')
-                                ->body(count($newAgentIds) . ' agent(s) attached successfully.')
+                                ->title(__('creators-ticketing::resources.agent.notifications.attached_title'))
+                                ->body(__('creators-ticketing::resources.agent.notifications.attached_body', ['count' => count($newAgentIds)]))
                                 ->send();
                         })
                         ->icon('heroicon-o-user-plus')
-                        ->modalHeading('Add Agents')
-                        ->modalSubmitActionLabel('Add'),
+                        ->modalHeading(__('creators-ticketing::resources.agent.add_agents'))
+                        ->modalSubmitActionLabel(__('creators-ticketing::resources.agent.add_submit')),
             ])
             ->actions([
                 EditAction::make()
                     ->form(function (Model $record) {
                         return [
                             Select::make('role')
-                                ->label('Role')
+                                ->label(__('creators-ticketing::resources.agent.role'))
                                 ->options([
-                                    'admin' => 'Department Admin',
-                                    'editor' => 'Editor',
-                                    'agent' => 'Agent',
+                                    'admin' => __('creators-ticketing::resources.agent.roles.admin'),
+                                    'editor' => __('creators-ticketing::resources.agent.roles.editor'),
+                                    'agent' => __('creators-ticketing::resources.agent.roles.agent'),
                                 ])
                                 ->default($record->pivot->role)
                                 ->live()
@@ -298,47 +314,48 @@ class AgentsRelationManager extends RelationManager
                                 })
                                 ->required(),
                             Section::make('Permissions')
+                                ->label(__('creators-ticketing::resources.agent.permissions_section'))
                                 ->schema([
                                     Toggle::make('can_create_tickets')
-                                            ->label('Create tickets')
+                                            ->label(__('creators-ticketing::resources.agent.permissions.can_create_tickets'))
                                             ->default($record->pivot->can_create_tickets)
-                                            ->helperText('Can create tickets in this department.'),
+                                            ->helperText(__('creators-ticketing::resources.agent.permissions.can_create_tickets_helper')),
                                     Toggle::make('can_view_all_tickets')
-                                        ->label('View all department tickets')
+                                        ->label(__('creators-ticketing::resources.agent.permissions.can_view_all_tickets'))
                                         ->default($record->pivot->can_view_all_tickets)
-                                        ->helperText('Can view all tickets in this department, not just assigned ones.'),
+                                        ->helperText(__('creators-ticketing::resources.agent.permissions.can_view_all_tickets_helper')),
                                     Toggle::make('can_assign_tickets')
-                                        ->label('Assign tickets')
+                                        ->label(__('creators-ticketing::resources.agent.permissions.can_assign_tickets'))
                                         ->default($record->pivot->can_assign_tickets)
-                                        ->helperText('Can assign tickets to other agents.'),
+                                        ->helperText(__('creators-ticketing::resources.agent.permissions.can_assign_tickets_helper')),
                                     Toggle::make('can_change_departments')
-                                        ->label('Change ticket department')
+                                        ->label(__('creators-ticketing::resources.agent.permissions.can_change_departments'))
                                         ->default($record->pivot->can_change_departments)
-                                        ->helperText('Can change the department of tickets.'),
+                                        ->helperText(__('creators-ticketing::resources.agent.permissions.can_change_departments_helper')),
                                     Toggle::make('can_change_status')
-                                        ->label('Change ticket status')
+                                        ->label(__('creators-ticketing::resources.agent.permissions.can_change_status'))
                                         ->default($record->pivot->can_change_status)
-                                        ->helperText('Can change the status of tickets.'),
+                                        ->helperText(__('creators-ticketing::resources.agent.permissions.can_change_status_helper')),
                                     Toggle::make('can_change_priority')
-                                        ->label('Change ticket priority')
+                                        ->label(__('creators-ticketing::resources.agent.permissions.can_change_priority'))
                                         ->default($record->pivot->can_change_priority)
-                                        ->helperText('Can change the priority of tickets.'),
+                                        ->helperText(__('creators-ticketing::resources.agent.permissions.can_change_priority_helper')),
                                     Toggle::make('can_reply_to_tickets')
-                                        ->label('Reply to tickets')
+                                        ->label(__('creators-ticketing::resources.agent.permissions.can_reply_to_tickets'))
                                         ->default($record->pivot->can_reply_to_tickets)
-                                        ->helperText('Can send public replies to tickets.'),
+                                        ->helperText(__('creators-ticketing::resources.agent.permissions.can_reply_to_tickets_helper')),
                                     Toggle::make('can_add_internal_notes')
-                                        ->label('Add internal notes')
+                                        ->label(__('creators-ticketing::resources.agent.permissions.can_add_internal_notes'))
                                         ->default($record->pivot->can_add_internal_notes)
-                                        ->helperText('Can add internal notes on tickets.'),
+                                        ->helperText(__('creators-ticketing::resources.agent.permissions.can_add_internal_notes_helper')),
                                     Toggle::make('can_view_internal_notes')
-                                        ->label('View internal notes')
+                                        ->label(__('creators-ticketing::resources.agent.permissions.can_view_internal_notes'))
                                         ->default($record->pivot->can_view_internal_notes)
-                                        ->helperText('Can view internal notes on tickets.'),
+                                        ->helperText(__('creators-ticketing::resources.agent.permissions.can_view_internal_notes_helper')),
                                     Toggle::make('can_delete_tickets')
-                                        ->label('Delete tickets')
+                                        ->label(__('creators-ticketing::resources.agent.permissions.can_delete_tickets'))
                                         ->default($record->pivot->can_delete_tickets)
-                                        ->helperText('Can delete tickets (use with caution).'),
+                                        ->helperText(__('creators-ticketing::resources.agent.permissions.can_delete_tickets_helper')),
                                 ])
                                 ->columns(2),
                         ];
@@ -359,7 +376,7 @@ class AgentsRelationManager extends RelationManager
                         ]);
                         Notification::make()
                             ->success()
-                            ->title('Agent permissions updated')
+                            ->title(__('creators-ticketing::resources.agent.notifications.permissions_updated'))
                             ->send();
                     }),
                 DetachAction::make(),

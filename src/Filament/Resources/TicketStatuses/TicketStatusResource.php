@@ -32,28 +32,48 @@ class TicketStatusResource extends Resource
 
     protected static BackedEnum|string|null $navigationIcon = 'heroicon-o-tag';
 
+    public static function getNavigationLabel(): string
+    {
+        return __('creators-ticketing::resources.ticket_status.title');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('creators-ticketing::resources.ticket_status.label');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('creators-ticketing::resources.ticket_status.title');
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema->schema([
             TextInput::make('name')
+                ->label(__('creators-ticketing::resources.ticket_status.name'))
                 ->required()
                 ->maxLength(255)
                 ->live(onBlur: true)
                 ->afterStateUpdated(fn (Set $set, ?string $state) => $set('slug', Str::slug($state))),
 
             TextInput::make('slug')
+                ->label(__('creators-ticketing::resources.ticket_status.slug'))
                 ->required()
                 ->maxLength(255)
                 ->unique(TicketStatus::class, 'slug', ignoreRecord: true),
 
             ColorPicker::make('color')
+                ->label(__('creators-ticketing::resources.ticket_status.color'))
                 ->required(),
 
             Toggle::make('is_default_for_new')
-                ->helperText('This status will be automatically assigned to all new tickets.'),
+                ->label(__('creators-ticketing::resources.ticket_status.is_default'))
+                ->helperText(__('creators-ticketing::resources.ticket_status.is_default_helper')),
 
             Toggle::make('is_closing_status')
-                ->helperText('Tickets with this status are considered "closed" in reports and filters.'),
+                ->label(__('creators-ticketing::resources.ticket_status.is_closing'))
+                ->helperText(__('creators-ticketing::resources.ticket_status.is_closing_helper')),
         ]);
     }
 
@@ -62,19 +82,22 @@ class TicketStatusResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('name')
+                    ->label(__('creators-ticketing::resources.ticket_status.name'))
                     ->searchable(),
 
-                ColorColumn::make('color'),
+                ColorColumn::make('color')
+                    ->label(__('creators-ticketing::resources.ticket_status.color')),
 
                 IconColumn::make('is_default_for_new')
                     ->boolean()
-                    ->label('Default'),
+                    ->label(__('creators-ticketing::resources.ticket_status.columns.default')),
 
                 IconColumn::make('is_closing_status')
                     ->boolean()
-                    ->label('Is Closing'),
+                    ->label(__('creators-ticketing::resources.ticket_status.columns.is_closing')),
 
                 TextColumn::make('created_at')
+                    ->label(__('creators-ticketing::resources.ticket_status.created_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),

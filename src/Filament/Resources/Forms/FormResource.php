@@ -33,26 +33,40 @@ class FormResource extends Resource
 
     protected static BackedEnum|string|null $navigationIcon = 'heroicon-o-document-duplicate';
 
+    public static function getNavigationLabel(): string
+    {
+        return __('creators-ticketing::resources.form.title');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('creators-ticketing::resources.form.title');
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema->schema([
             TextInput::make('name')
+                ->label(__('creators-ticketing::resources.form.name'))
                 ->required()
                 ->maxLength(255)
                 ->live(onBlur: true)
                 ->afterStateUpdated(fn (Set $set, ?string $state) => $set('slug', Str::slug($state))),
 
             TextInput::make('slug')
+                ->label(__('creators-ticketing::resources.form.slug'))
                 ->required()
                 ->maxLength(255)
                 ->unique(Form::class, 'slug', ignoreRecord: true),
 
             Textarea::make('description')
+                ->label(__('creators-ticketing::resources.form.description'))
                 ->rows(3)
                 ->maxLength(65535)
                 ->columnSpanFull(),
 
             Toggle::make('is_active')
+                ->label(__('creators-ticketing::resources.form.is_active'))
                 ->required()
                 ->default(true),
         ]);
@@ -63,34 +77,38 @@ class FormResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('name')
+                    ->label(__('creators-ticketing::resources.form.name'))
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('slug')
+                    ->label(__('creators-ticketing::resources.form.slug'))
                     ->searchable(),
 
                 TextColumn::make('fields_count')
                     ->counts('fields')
-                    ->label('Fields'),
+                    ->label(__('creators-ticketing::resources.form.fields')),
 
                 TextColumn::make('departments_count')
                     ->counts('departments')
-                    ->label('Departments'),
+                    ->label(__('creators-ticketing::resources.form.departments')),
 
                 IconColumn::make('is_active')
+                    ->label(__('creators-ticketing::resources.form.is_active'))
                     ->boolean(),
 
                 TextColumn::make('created_at')
+                    ->label(__('creators-ticketing::resources.form.created_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 TernaryFilter::make('is_active')
-                    ->label('Active')
+                    ->label(__('creators-ticketing::resources.form.filters.active'))
                     ->boolean()
-                    ->trueLabel('Active only')
-                    ->falseLabel('Inactive only')
+                    ->trueLabel(__('creators-ticketing::resources.form.filters.active_only'))
+                    ->falseLabel(__('creators-ticketing::resources.form.filters.inactive_only'))
                     ->native(false),
             ])
             ->actions([

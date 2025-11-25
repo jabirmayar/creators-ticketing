@@ -28,6 +28,7 @@ use Illuminate\Database\Eloquent\Model;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Section;
+use Filament\Tables\Columns\BadgeColumn;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\RichEditor;
 use Filament\Tables\Filters\SelectFilter;
@@ -54,6 +55,21 @@ class TicketResource extends Resource
     protected static ?string $model = Ticket::class;
     
     protected static BackedEnum|string|null $navigationIcon = 'heroicon-o-ticket';
+
+    public static function getNavigationLabel(): string
+    {
+        return __('creators-ticketing::resources.ticket.title');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('creators-ticketing::resources.ticket.label');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('creators-ticketing::resources.ticket.plural_label');
+    }
 
     public static function canViewAny(): bool
     {
@@ -141,10 +157,10 @@ class TicketResource extends Resource
 
         return $schema->schema([
             Group::make()->schema([
-                Section::make('Ticket Details')
+                Section::make(__('creators-ticketing::resources.ticket.details'))
                     ->schema([
                         Select::make('department_id')
-                            ->label('Department')
+                            ->label(__('creators-ticketing::resources.ticket.department'))
                             ->relationship('department', 'name', function ($query) use ($permissions) {
                                 $query->where('is_active', true);
                                 
@@ -176,10 +192,10 @@ class TicketResource extends Resource
             ])->columnSpan(2),
             
             Group::make()->schema([
-                Section::make('Properties')
+                Section::make(__('creators-ticketing::resources.ticket.properties'))
                     ->schema([
                         Select::make('user_id')
-                            ->label('Requester')
+                            ->label(__('creators-ticketing::resources.ticket.requester'))
                             ->relationship('requester', 'name')
                             ->searchable()
                             ->required()
@@ -192,7 +208,7 @@ class TicketResource extends Resource
                             ->disabled(fn (?Model $record) => $record instanceof Ticket && !$permissions['is_admin']),
                         
                         Select::make('assignee_id')
-                            ->label('Assignee')
+                            ->label(__('creators-ticketing::resources.ticket.assignee'))
                             ->searchable()
                             ->getSearchResultsUsing(fn (string $search) => 
                                 User::where('name', 'like', "%{$search}%")
@@ -225,7 +241,7 @@ class TicketResource extends Resource
                             ->disabled(fn (?Model $record) => $record instanceof Ticket && !$permissions['is_admin']),
                         
                         Select::make('ticket_status_id')
-                            ->label('Status')
+                            ->label(__('creators-ticketing::resources.ticket.status'))
                             ->relationship('status', 'name')
                             ->visible(fn (?Model $record, Get $get) => 
                                 $permissions['is_admin'] || 
@@ -238,7 +254,7 @@ class TicketResource extends Resource
                             ),
                         
                         Select::make('priority')
-                            ->label('Priority')
+                            ->label(__('creators-ticketing::resources.ticket.priority'))
                             ->options(TicketPriority::class)
                             ->enum(TicketPriority::class)
                             ->required()
@@ -277,7 +293,7 @@ class TicketResource extends Resource
             return [
                 Placeholder::make('no_form')
                     ->label('')
-                    ->content('No form configured for this department')
+                    ->content(__('creators-ticketing::resources.ticket.no_form'))
                     ->columnSpanFull(),
             ];
         }
@@ -367,10 +383,10 @@ class TicketResource extends Resource
     {
         return $schema
             ->schema([
-                InfoSection::make('Ticket Information')
+                InfoSection::make(__('creators-ticketing::resources.ticket.information'))
                     ->schema([
                         TextEntry::make('ticket_uid')
-                            ->label('Ticket ID'),
+                            ->label(__('creators-ticketing::resources.ticket.ticket_id')),
                         
                         TextEntry::make('title'),
                         
@@ -379,17 +395,17 @@ class TicketResource extends Resource
                             ->columnSpanFull(),
                         
                         TextEntry::make('requester.name')
-                            ->label('Requester'),
+                            ->label(__('creators-ticketing::resources.ticket.requester')),
                         
                         TextEntry::make('assignee.name')
-                            ->label('Assignee')
-                            ->default('Unassigned'),
+                            ->label(__('creators-ticketing::resources.ticket.assignee'))
+                            ->default(__('creators-ticketing::resources.ticket.unassigned')),
                         
                         TextEntry::make('department.name')
-                            ->label('Department'),
+                            ->label(__('creators-ticketing::resources.ticket.department')),
                         
                         TextEntry::make('status.name')
-                            ->label('Status')
+                            ->label(__('creators-ticketing::resources.ticket.status'))
                             ->badge()
                             ->color(fn ($record) => $record->status?->color ?? 'gray'),
                         
@@ -404,7 +420,7 @@ class TicketResource extends Resource
                     ])
                     ->columns(2),
                 
-                InfoSection::make('Custom Fields')
+                InfoSection::make(__('creators-ticketing::resources.ticket.custom_fields'))
                     ->schema(function (Ticket $record) {
                         $department = $record->department;
                         $form = $department?->forms()->with('fields')->first();
@@ -413,7 +429,7 @@ class TicketResource extends Resource
                             return [
                                 TextEntry::make('no_custom_fields')
                                     ->label('')
-                                    ->default('No custom fields')
+                                    ->default(__('creators-ticketing::resources.ticket.no_custom_fields'))
                                     ->columnSpanFull(),
                             ];
                         }
@@ -428,7 +444,7 @@ class TicketResource extends Resource
                                     ->label($field->label)
                                     ->formatStateUsing(function ($state) use ($field) {
                                         if ($field->type === 'checkbox' || $field->type === 'toggle') {
-                                            return $state ? 'Yes' : 'No';
+                                            return $state ? __('creators-ticketing::resources.ticket.yes') : __('creators-ticketing::resources.ticket.no');
                                         }
                                         
                                         if ($field->type === 'select' || $field->type === 'radio') {
@@ -448,7 +464,7 @@ class TicketResource extends Resource
                         return $schema ?: [
                             TextEntry::make('no_data')
                                 ->label('')
-                                ->default('No custom field data')
+                                ->default(__('creators-ticketing::resources.ticket.no_custom_data'))
                                 ->columnSpanFull(),
                         ];
                     })
@@ -460,7 +476,7 @@ class TicketResource extends Resource
             ]);
     }
 
-    public static function table(Table $table): Table
+   public static function table(Table $table): Table
     {
         $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
         $permissions = (new static)->getUserPermissions();
@@ -496,13 +512,32 @@ class TicketResource extends Resource
                     $query->where('user_id', $user->id);
                 }
             })
+            ->recordClasses(fn (Model $record) => match (true) {
+                method_exists($record, 'isUnseenBy') && $record->isUnseenBy(auth()->id()) 
+                    => 'font-bold bg-primary-50/50 dark:bg-primary-900/20',
+                default => null,
+            })
             ->columns([
+                BadgeColumn::make('unread_indicator')
+                    ->label('')
+                    ->color('info')
+                    ->size('sm')
+                    ->state(fn (Model $record) =>
+                        method_exists($record, 'isUnseenBy') && $record->isUnseenBy(auth()->id())
+                            ? __('creators-ticketing::resources.ticket.new')
+                            : null
+                    )
+                    ->extraAttributes(['class' => 'text-[11px]'])
+                    ->tooltip(fn ($state) => $state ? __('creators-ticketing::resources.ticket.new_tool_tip') : null),
+
                 TextColumn::make('ticket_uid')
-                    ->label('ID')
+                    ->label(__('creators-ticketing::resources.ticket.id'))
                     ->searchable()
                     ->sortable(),
                 
                 TextColumn::make('title')
+                    ->label(__('creators-ticketing::resources.ticket.title_field'))
+                    ->weight(fn (Model $record) => (method_exists($record, 'isUnseenBy') && $record->isUnseenBy(auth()->id())) ? 'bold' : 'medium')
                     ->searchable(query: function ($query, string $search) {
                         return $query->where(function ($q) use ($search) {
                             $q->where('ticket_uid', 'like', "%{$search}%")
@@ -513,21 +548,25 @@ class TicketResource extends Resource
                     ->tooltip(fn (Ticket $record): string => $record->title),
                 
                 TextColumn::make('department.name')
+                    ->label(__('creators-ticketing::resources.ticket.department'))
                     ->color('primary')
                     ->searchable()
                     ->sortable(),
                 
                 TextColumn::make('requester.name')
+                    ->label(__('creators-ticketing::resources.ticket.requester'))
                     ->searchable()
                     ->sortable(),
                 
                 TextColumn::make('assignee.name')
+                    ->label(__('creators-ticketing::resources.ticket.assignee'))
                     ->searchable()
                     ->sortable()
-                    ->default('Unassigned')
-                    ->formatStateUsing(fn ($state) => $state ?: 'Unassigned'),
+                    ->default(__('creators-ticketing::resources.ticket.unassigned'))
+                    ->formatStateUsing(fn ($state) => $state ?: __('creators-ticketing::resources.ticket.unassigned')),
                 
                 TextColumn::make('status.name')
+                    ->label(__('creators-ticketing::resources.ticket.status'))
                     ->formatStateUsing(fn ($record) => 
                         $record->status?->name ? 
                             "<span style='
@@ -548,30 +587,35 @@ class TicketResource extends Resource
                     ->html(),
                 
                 TextColumn::make('priority')
+                    ->label(__('creators-ticketing::resources.ticket.priority'))
                     ->badge(),
                 
                 TextColumn::make('last_activity_at')
+                    ->label(__('creators-ticketing::resources.ticket.last_activity'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: false),
             ])
             ->filters([
                 SelectFilter::make('department')
+                    ->label(__('creators-ticketing::resources.ticket.department'))
                     ->relationship('department', 'name')
                     ->preload(),
                 
                 SelectFilter::make('status')
+                    ->label(__('creators-ticketing::resources.ticket.status'))
                     ->relationship('status', 'name')
                     ->preload(),
                 
                 SelectFilter::make('priority')
+                    ->label(__('creators-ticketing::resources.ticket.priority'))
                     ->options(TicketPriority::class)
                     ->preload(),
             ])
             ->actions([
                 ViewAction::make(),
                 Action::make('assign')
-                    ->label('Assign')
+                    ->label(__('creators-ticketing::resources.ticket.actions.assign'))
                     ->icon('heroicon-o-user-plus')
                     ->visible(fn (Model $record) => 
                         $record instanceof Ticket && (
@@ -581,7 +625,7 @@ class TicketResource extends Resource
                     ->form([
                          (config('creators-ticketing.ticket_assign_scope') === 'department_only') 
                            ? Select::make('assignee_id')
-                                    ->label('Select Assignee')
+                                    ->label(__('creators-ticketing::resources.ticket.actions.select_assignee'))
                                     ->searchable()
                                     ->getSearchResultsUsing(function (string $search, Component $component) use ($userModel) {
                                         $departmentId = $component->getContainer()->getRecord()?->department_id;
@@ -623,11 +667,10 @@ class TicketResource extends Resource
                                     })
                                     ->default(fn (Model $record) => $record instanceof Ticket ? $record->assignee_id : null)
                                     ->preload(fn(Model $record) => $record instanceof Ticket && config('creators-ticketing.ticket_assign_scope') === 'department_only' && $record->department_id !== null)
-                                    ->required()
                                     ->native(false)
                         
                         :   Select::make('assignee_id')
-                                ->label('Select Assignee')
+                                ->label(__('creators-ticketing::resources.ticket.actions.select_assignee'))
                                 ->searchable()
                                 ->getSearchResultsUsing(function (string $search) use ($userModel) {
                                     return $userModel::where('name', 'like', "%{$search}%")
@@ -641,7 +684,6 @@ class TicketResource extends Resource
                             )
                             ->default(fn (Model $record) => $record instanceof Ticket ? $record->assignee_id : null)
                             ->preload(false)
-                            ->required()
                             ->native(false),
                     ])
                     ->action(function (Model $record, array $data) use ($userModel) {
@@ -654,7 +696,10 @@ class TicketResource extends Resource
                             'new_value' => $userModel::find($data['assignee_id'])?->name,
                         ]);
                         
-                        Notification::make()->title('Ticket assigned')->success()->send();
+                        Notification::make()
+                            ->title(__('creators-ticketing::resources.ticket.notifications.assigned'))
+                            ->success()
+                            ->send();
                     }),
             ])
             ->bulkActions([

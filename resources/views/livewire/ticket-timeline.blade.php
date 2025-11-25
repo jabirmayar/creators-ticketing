@@ -17,6 +17,7 @@ x-init="
         @php
             $isLast = $limit ? ($index === count($activities) - 1) : ($activities->hasMorePages() ? false : ($index === $activities->count() - 1));
             $isReplyOrNote = str_contains($activity->description, 'Reply') || str_contains($activity->description, 'Internal note');
+            $descriptionKey = \Illuminate\Support\Str::slug($activity->description, '_');
         @endphp
         
         <div style="position: relative; display: flex; gap: 1rem; padding-bottom: 2rem;">
@@ -43,7 +44,7 @@ x-init="
                         <p :style="isDark ? 
                             'font-size: 0.875rem; font-weight: 600; color: #f9fafb;' : 
                             'font-size: 0.875rem; font-weight: 600; color: #111827;'">
-                            {{ $activity->description }}
+                            {{ __('creators-ticketing::resources.activities.' . $descriptionKey) }}
                         </p>
                         <span :style="isDark ? 
                             'white-space: nowrap; font-size: 0.75rem; color: #9ca3af;' : 
@@ -56,7 +57,7 @@ x-init="
                         <span :style="isDark ? 
                             'font-size: 0.75rem; font-weight: 500; color: #9ca3af;' : 
                             'font-size: 0.75rem; font-weight: 500; color: #6b7280;'">
-                            👤 {{ $activity->user?->name ?? 'System' }}
+                            👤 {{ $activity->user?->name ?? __('creators-ticketing::resources.timeline.system') }}
                         </span>
                     </div>
 
@@ -78,7 +79,7 @@ x-init="
                                         <span :style="isDark ? 
                                             'display: inline-flex; align-items: center; gap: 0.25rem; border-radius: 0.375rem; background-color: rgba(55, 65, 81, 0.6); padding: 0.25rem 0.625rem; font-size: 0.75rem; color: #d1d5db;' : 
                                             'display: inline-flex; align-items: center; gap: 0.25rem; border-radius: 0.375rem; background-color: #f3f4f6; padding: 0.25rem 0.625rem; font-size: 0.75rem; color: #374151;'">
-                                            From: <strong>{{ $activity->old_value }}</strong>
+                                            {{ __('creators-ticketing::resources.timeline.from') }} <strong>{{ $activity->old_value }}</strong>
                                         </span>
                                     @endif
                                     
@@ -90,7 +91,7 @@ x-init="
                                         <span :style="isDark ? 
                                             'display: inline-flex; align-items: center; gap: 0.25rem; border-radius: 0.375rem; background-color: rgba(16, 185, 129, 0.2); padding: 0.25rem 0.625rem; font-size: 0.75rem; color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);' : 
                                             'display: inline-flex; align-items: center; gap: 0.25rem; border-radius: 0.375rem; background-color: #d1fae5; padding: 0.25rem 0.625rem; font-size: 0.75rem; color: #065f46;'">
-                                            To: <strong>{{ $activity->new_value }}</strong>
+                                            {{ __('creators-ticketing::resources.timeline.to') }} <strong>{{ $activity->new_value }}</strong>
                                         </span>
                                     @endif
                                 </div>
@@ -121,12 +122,12 @@ x-init="
             <p :style="isDark ? 
                 'font-size: 0.875rem; font-weight: 500; color: #9ca3af;' : 
                 'font-size: 0.875rem; font-weight: 500; color: #6b7280;'">
-                No activity yet
+                {{ __('creators-ticketing::resources.timeline.empty_title') }}
             </p>
             <p :style="isDark ? 
                 'margin-top: 0.25rem; font-size: 0.75rem; color: #6b7280;' : 
                 'margin-top: 0.25rem; font-size: 0.75rem; color: #9ca3af;'">
-                Timeline will appear here as actions are taken
+                {{ __('creators-ticketing::resources.timeline.empty_desc') }}
             </p>
         </div>
     @endforelse
