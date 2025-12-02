@@ -2,9 +2,8 @@
 
 namespace daacreators\CreatorsTicketing\Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
 use daacreators\CreatorsTicketing\Models\TicketStatus;
+use Illuminate\Database\Seeder;
 
 class TicketStatusSeeder extends Seeder
 {
