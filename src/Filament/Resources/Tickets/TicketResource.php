@@ -18,7 +18,6 @@ use Filament\Actions\ViewAction;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
@@ -35,7 +34,6 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
-use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -339,17 +337,17 @@ class TicketResource extends Resource
         if (! $form || ! $form->fields->count()) {
             if ($department->forms()->count() > 0 && ! $formId) {
                 return [
-                    Placeholder::make('select_form')
+                    TextEntry::make('select_form')
                         ->label('')
-                        ->content(__('creators-ticketing::resources.ticket.select_form_message') ?? 'Please select a form.')
+                        ->state(__('creators-ticketing::resources.ticket.select_form_message') ?? 'Please select a form.')
                         ->columnSpanFull(),
                 ];
             }
 
             return [
-                Placeholder::make('no_form')
+                TextEntry::make('no_form')
                     ->label('')
-                    ->content(__('creators-ticketing::resources.ticket.no_form'))
+                    ->state(__('creators-ticketing::resources.ticket.no_form'))
                     ->columnSpanFull(),
             ];
         }
@@ -590,7 +588,8 @@ class TicketResource extends Resource
                 default => null,
             })
             ->columns([
-                BadgeColumn::make('unread_indicator')
+                TextColumn::make('unread_indicator')
+                    ->badge()
                     ->label('')
                     ->color('info')
                     ->size('sm')
@@ -682,7 +681,7 @@ class TicketResource extends Resource
                     ->options(TicketPriority::class)
                     ->preload(),
             ])
-            ->actions([
+            ->recordActions([
                 ViewAction::make(),
                 Action::make('assign')
                     ->label(__('creators-ticketing::resources.ticket.actions.assign'))
@@ -691,7 +690,7 @@ class TicketResource extends Resource
                         $permissions['is_admin'] ||
                         (in_array($record->department_id, $permissions['departments']) && ($permissions['permissions'][$record->department_id]['can_assign_tickets'] ?? false)))
                     )
-                    ->form([
+                    ->schema([
                         (config('creators-ticketing.ticket_assign_scope') === 'department_only')
                           ? Select::make('assignee_id')
                               ->label(__('creators-ticketing::resources.ticket.actions.select_assignee'))
@@ -772,7 +771,7 @@ class TicketResource extends Resource
                             ->send();
                     }),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make()
                         ->visible(fn () => $permissions['is_admin'] ||

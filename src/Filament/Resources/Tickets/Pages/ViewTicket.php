@@ -796,7 +796,7 @@ class ViewTicket extends ViewRecord
                 ->color('gray')
                 ->button()
                 ->visible(fn () => $canAssignTickets)
-                ->form([
+                ->schema([
                     (config('creators-ticketing.ticket_assign_scope') === 'department_only')
                             ? Select::make('assignee')
                                 ->label(__('creators-ticketing::resources.ticket.actions.select_assignee'))
@@ -881,7 +881,7 @@ class ViewTicket extends ViewRecord
                 ->color('warning')
                 ->button()
                 ->visible(fn () => $canChangeDepartment)
-                ->form([
+                ->schema([
                     Select::make('department')
                         ->label(__('creators-ticketing::resources.ticket.actions.transfer_dept'))
                         ->options(function () use ($permissions) {

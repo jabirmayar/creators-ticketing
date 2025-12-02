@@ -103,7 +103,7 @@ class AgentsRelationManager extends RelationManager
             ->headerActions([
                 Action::make('Add Users')
                     ->label(__('creators-ticketing::resources.agent.add_agents'))
-                    ->form([
+                    ->schema([
                         Select::make('user_id')
                             ->label(__('creators-ticketing::resources.agent.select_agent'))
                             ->searchable()
@@ -261,9 +261,9 @@ class AgentsRelationManager extends RelationManager
                     ->modalHeading(__('creators-ticketing::resources.agent.add_agents'))
                     ->modalSubmitActionLabel(__('creators-ticketing::resources.agent.add_submit')),
             ])
-            ->actions([
+            ->recordActions([
                 EditAction::make()
-                    ->form(function (Model $record) {
+                    ->schema(function (Model $record) {
                         return [
                             Select::make('role')
                                 ->label(__('creators-ticketing::resources.agent.role'))
@@ -379,7 +379,7 @@ class AgentsRelationManager extends RelationManager
                     }),
                 DetachAction::make(),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 BulkActionGroup::make([
                     DetachBulkAction::make(),
                 ]),

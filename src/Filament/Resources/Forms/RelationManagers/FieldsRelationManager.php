@@ -62,14 +62,14 @@ class FieldsRelationManager extends RelationManager
             ->defaultSort('order')
             ->headerActions([
                 CreateAction::make()
-                    ->form($this->getFieldForm()),
+                    ->schema($this->getFieldForm()),
             ])
-            ->actions([
+            ->recordActions([
                 EditAction::make()
-                    ->form($this->getFieldForm()),
+                    ->schema($this->getFieldForm()),
                 DeleteAction::make(),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),

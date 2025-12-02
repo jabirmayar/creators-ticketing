@@ -109,11 +109,11 @@ class FormResource extends Resource
                     ->falseLabel(__('creators-ticketing::resources.form.filters.inactive_only'))
                     ->native(false),
             ])
-            ->actions([
+            ->recordActions([
                 EditAction::make(),
                 DeleteAction::make(),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
