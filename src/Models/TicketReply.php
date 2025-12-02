@@ -12,7 +12,7 @@ class TicketReply extends Model
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
-        $this->setTable(config('creators-ticketing.table_prefix') . 'ticket_replies');
+        $this->setTable(config('creators-ticketing.table_prefix').'ticket_replies');
     }
 
     protected $casts = [
@@ -29,6 +29,7 @@ class TicketReply extends Model
     public function user(): BelongsTo
     {
         $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
+
         return $this->belongsTo($userModel, 'user_id');
     }
 
@@ -47,5 +48,4 @@ class TicketReply extends Model
         $this->seen_at = now();
         $this->saveQuietly();
     }
-
 }

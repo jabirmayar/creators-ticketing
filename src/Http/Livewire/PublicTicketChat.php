@@ -2,24 +2,28 @@
 
 namespace daacreators\CreatorsTicketing\Http\Livewire;
 
-use Livewire\Component;
-use Livewire\Attributes\On;
-use Livewire\WithFileUploads;
-use Illuminate\Support\Facades\RateLimiter;
 use daacreators\CreatorsTicketing\Models\Ticket;
 use daacreators\CreatorsTicketing\Models\TicketReply;
+use Illuminate\Support\Facades\RateLimiter;
+use Livewire\Attributes\On;
+use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class PublicTicketChat extends Component
 {
     use WithFileUploads;
 
     public $ticketId;
+
     public $ticket;
+
     public $replies;
+
     public $message = '';
+
     public $attachments = [];
-    
-    public $lastReplyId = null; 
+
+    public $lastReplyId = null;
 
     public function mount($ticketId)
     {
@@ -28,9 +32,9 @@ class PublicTicketChat extends Component
             ->where('id', $ticketId)
             ->where('user_id', auth()->id())
             ->firstOrFail();
-            
+
         $this->ticket->markSeenBy(auth()->id());
-        
+
         $this->loadReplies();
     }
 
@@ -59,18 +63,19 @@ class PublicTicketChat extends Component
 
     public function sendMessage()
     {
-        $key = 'ticket-message:' . auth()->id();
-    
+        $key = 'ticket-message:'.auth()->id();
+
         if (RateLimiter::tooManyAttempts($key, 5)) {
             $seconds = RateLimiter::availableIn($key);
             $this->addError('message', "You are sending messages too fast. Please wait $seconds seconds.");
+
             return;
         }
-        
+
         RateLimiter::hit($key);
 
         $this->validate([
-            'message' => 'required|string|max:5000', 
+            'message' => 'required|string|max:5000',
         ]);
 
         $cleanMessage = strip_tags($this->message);
@@ -81,10 +86,10 @@ class PublicTicketChat extends Component
             'content' => $this->message,
             'is_internal_note' => false,
         ]);
-        
+
         $this->message = '';
-        
-        $this->loadReplies(); 
+
+        $this->loadReplies();
     }
 
     #[On('$refresh')]
@@ -96,6 +101,7 @@ class PublicTicketChat extends Component
     public function render()
     {
         $this->loadReplies();
+
         return view('creators-ticketing::livewire.public-ticket-chat');
     }
 }

@@ -2,18 +2,20 @@
 
 namespace daacreators\CreatorsTicketing\Http\Livewire;
 
-use Livewire\Component;
-use Livewire\Attributes\On;
-use Livewire\WithPagination;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
+use Livewire\Attributes\On;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class TicketTimeline extends Component implements HasForms
 {
     use InteractsWithForms, WithPagination;
 
     public $ticket;
+
     public $limit = null;
+
     public $perPage = 10;
 
     public function mount($ticket, $limit = null)
@@ -27,11 +29,11 @@ class TicketTimeline extends Component implements HasForms
         $query = $this->ticket->activities()
             ->with('user')
             ->orderBy('created_at', 'desc');
-        
+
         if ($this->limit) {
             return $query->limit($this->limit)->get();
         }
-        
+
         return $query->simplePaginate($this->perPage);
     }
 
@@ -44,7 +46,7 @@ class TicketTimeline extends Component implements HasForms
     public function render()
     {
         return view('creators-ticketing::livewire.ticket-timeline', [
-            'activities' => $this->activities
+            'activities' => $this->activities,
         ]);
     }
 }

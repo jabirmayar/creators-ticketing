@@ -2,16 +2,17 @@
 
 namespace daacreators\CreatorsTicketing\Http\Livewire;
 
-use Livewire\Component;
-use Livewire\Attributes\On;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
+use Livewire\Attributes\On;
+use Livewire\Component;
 
 class TicketChatMessages extends Component implements HasForms
 {
     use InteractsWithForms;
 
     public $ticket;
+
     public $replies;
 
     public function mount($ticket)
@@ -28,7 +29,7 @@ class TicketChatMessages extends Component implements HasForms
             ->get();
 
         foreach ($this->replies as $reply) {
-            if (!$reply->is_seen && auth()->check()) {
+            if (! $reply->is_seen && auth()->check()) {
                 $reply->markSeenBy(auth()->id());
             }
         }
@@ -43,7 +44,8 @@ class TicketChatMessages extends Component implements HasForms
 
     public function render()
     {
-        $this->loadReplies(); 
+        $this->loadReplies();
+
         return view('creators-ticketing::livewire.ticket-chat-messages');
     }
 }

@@ -4,14 +4,16 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
-    public function up(): void {
+return new class extends Migration
+{
+    public function up(): void
+    {
         $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
         $userInstance = new $userModel;
         $userTable = $userInstance->getTable();
         $userKey = $userInstance->getKeyName();
 
-        Schema::create(config('creators-ticketing.table_prefix') . 'tickets', function (Blueprint $table) use ($userTable, $userKey) {
+        Schema::create(config('creators-ticketing.table_prefix').'tickets', function (Blueprint $table) use ($userTable, $userKey) {
             $table->id();
             $table->string('ticket_uid')->unique();
 
@@ -22,7 +24,7 @@ return new class extends Migration {
                 ->cascadeOnDelete();
 
             $table->foreignId('department_id')
-                ->constrained(config('creators-ticketing.table_prefix') . 'departments')
+                ->constrained(config('creators-ticketing.table_prefix').'departments')
                 ->cascadeOnDelete();
 
             $table->unsignedBigInteger('assignee_id')->nullable();
@@ -32,7 +34,7 @@ return new class extends Migration {
                 ->nullOnDelete();
 
             $table->foreignId('ticket_status_id')
-                ->constrained(config('creators-ticketing.table_prefix') . 'ticket_statuses')
+                ->constrained(config('creators-ticketing.table_prefix').'ticket_statuses')
                 ->cascadeOnDelete();
 
             $table->string('priority')->default('low');
@@ -51,7 +53,8 @@ return new class extends Migration {
         });
     }
 
-    public function down(): void {
-        Schema::dropIfExists(config('creators-ticketing.table_prefix') . 'tickets');
+    public function down(): void
+    {
+        Schema::dropIfExists(config('creators-ticketing.table_prefix').'tickets');
     }
 };

@@ -3,8 +3,8 @@
 namespace daacreators\CreatorsTicketing\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Form extends Model
 {
@@ -12,8 +12,9 @@ class Form extends Model
     {
         parent::__construct($attributes);
 
-        $this->setTable(config('creators-ticketing.table_prefix') . 'forms');
+        $this->setTable(config('creators-ticketing.table_prefix').'forms');
     }
+
     protected $guarded = [];
 
     protected $casts = [
@@ -27,6 +28,6 @@ class Form extends Model
 
     public function departments(): BelongsToMany
     {
-        return $this->belongsToMany(Department::class, config('creators-ticketing.table_prefix') . 'department_forms');
+        return $this->belongsToMany(Department::class, config('creators-ticketing.table_prefix').'department_forms');
     }
 }

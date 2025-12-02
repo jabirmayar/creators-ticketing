@@ -3,31 +3,28 @@
 namespace daacreators\CreatorsTicketing\Filament\Resources\TicketStatuses;
 
 use BackedEnum;
-use Filament\Tables;
-use Filament\Tables\Table;
-use Illuminate\Support\Str;
-use Filament\Schemas\Schema;
-use Filament\Actions\EditAction;
-use Filament\Resources\Resource;
-use Filament\Schemas\Components;
+use daacreators\CreatorsTicketing\Models\TicketStatus;
+use daacreators\CreatorsTicketing\Traits\HasNavigationVisibility;
+use daacreators\CreatorsTicketing\Traits\HasTicketingNavGroup;
 use Filament\Actions\BulkActionGroup;
-use Filament\Forms\Components\Toggle;
 use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\ColorPicker;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Resources\Resource;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\ColorColumn;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Forms\Components\TextInput;
-use Filament\Tables\Columns\ColorColumn;
-use Filament\Forms\Components\ColorPicker;
-use Filament\Schemas\Components\Utilities\Set;
-use daacreators\CreatorsTicketing\Models\TicketStatus;
-use daacreators\CreatorsTicketing\Traits\HasTicketingNavGroup;
-use daacreators\CreatorsTicketing\Traits\HasNavigationVisibility;
-use daacreators\CreatorsTicketing\Filament\Resources\TicketStatuses\Pages;
+use Filament\Tables\Table;
+use Illuminate\Support\Str;
 
 class TicketStatusResource extends Resource
 {
     use HasNavigationVisibility, HasTicketingNavGroup;
-    
+
     protected static ?string $model = TicketStatus::class;
 
     protected static BackedEnum|string|null $navigationIcon = 'heroicon-o-tag';

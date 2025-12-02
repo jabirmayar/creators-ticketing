@@ -2,18 +2,17 @@
 
 namespace daacreators\CreatorsTicketing;
 
-use Livewire\Livewire;
-use Filament\Support\Assets\Css;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\ServiceProvider;
-use Filament\Support\Facades\FilamentAsset;
+use daacreators\CreatorsTicketing\Filament\Widgets\TicketStatsWidget;
+use daacreators\CreatorsTicketing\Http\Livewire\PublicTicketChat;
+use daacreators\CreatorsTicketing\Http\Livewire\TicketChatMessages;
+use daacreators\CreatorsTicketing\Http\Livewire\TicketSubmitForm;
+use daacreators\CreatorsTicketing\Http\Livewire\TicketTimeline;
 use daacreators\CreatorsTicketing\Models\Ticket;
 use daacreators\CreatorsTicketing\Observers\TicketObserver;
-use daacreators\CreatorsTicketing\Http\Livewire\TicketTimeline;
-use daacreators\CreatorsTicketing\Http\Livewire\PublicTicketChat;
-use daacreators\CreatorsTicketing\Http\Livewire\TicketSubmitForm;
-use daacreators\CreatorsTicketing\Http\Livewire\TicketChatMessages;
-use daacreators\CreatorsTicketing\Filament\Widgets\TicketStatsWidget;
+use Filament\Support\Assets\Css;
+use Filament\Support\Facades\FilamentAsset;
+use Illuminate\Support\ServiceProvider;
+use Livewire\Livewire;
 
 class TicketingServiceProvider extends ServiceProvider
 {
@@ -26,23 +25,23 @@ class TicketingServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        $this->loadTranslationsFrom(__DIR__ . '/../resources/lang', 'creators-ticketing');
+        $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'creators-ticketing');
 
         $this->publishes([
-            __DIR__ . '/../resources/lang' => $this->app->langPath('vendor/creators-ticketing'),
+            __DIR__.'/../resources/lang' => $this->app->langPath('vendor/creators-ticketing'),
         ], 'creators-ticketing-translations');
 
         $this->publishes([
-           __DIR__.'/../config/creators-ticketing.php' => config_path('creators-ticketing.php'),
+            __DIR__.'/../config/creators-ticketing.php' => config_path('creators-ticketing.php'),
         ], 'creators-ticketing-config');
 
-        $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
+        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
 
         Ticket::observe(TicketObserver::class);
 
         $this->registerLivewireComponent();
 
-        $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
+        $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
 
         $this->registerPrivateDisk();
 
@@ -64,8 +63,8 @@ class TicketingServiceProvider extends ServiceProvider
     protected function ensureStorageDirectoryExists(): void
     {
         $directory = storage_path('app/private/ticket-attachments');
-        
-        if (!file_exists($directory)) {
+
+        if (! file_exists($directory)) {
             mkdir($directory, 0755, true);
         }
     }
@@ -73,7 +72,7 @@ class TicketingServiceProvider extends ServiceProvider
     protected function registerLivewireComponent(): void
     {
         FilamentAsset::register([
-            Css::make('creators-ticketing', __DIR__ . '/../resources/dist/app.css'),
+            Css::make('creators-ticketing', __DIR__.'/../resources/dist/app.css'),
         ], 'daacreators/creators-ticketing');
 
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'creators-ticketing');
@@ -81,12 +80,12 @@ class TicketingServiceProvider extends ServiceProvider
         Livewire::component('creators-ticketing::ticket-submit-form', TicketSubmitForm::class);
 
         Livewire::component('creators-ticketing::public-ticket-chat', PublicTicketChat::class);
-        
+
         Livewire::component('creators-ticketing::ticket-chat-messages', TicketChatMessages::class);
 
         Livewire::component('creators-ticketing::ticket-timeline', TicketTimeline::class);
 
         Livewire::component('creators-ticketing.filament.widgets.ticket-stats-widget', TicketStatsWidget::class);
-        
+
     }
 }

@@ -2,8 +2,8 @@
 
 namespace daacreators\CreatorsTicketing\Filament\Resources\Departments\Pages;
 
-use Filament\Resources\Pages\CreateRecord;
 use daacreators\CreatorsTicketing\Filament\Resources\Departments\DepartmentResource;
+use Filament\Resources\Pages\CreateRecord;
 
 class CreateDepartment extends CreateRecord
 {

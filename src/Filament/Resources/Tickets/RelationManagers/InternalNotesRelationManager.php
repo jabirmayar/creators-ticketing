@@ -2,19 +2,18 @@
 
 namespace daacreators\CreatorsTicketing\Filament\Resources\Tickets\RelationManagers;
 
-use Filament\Tables;
-use Filament\Tables\Table;
-use Filament\Support\Enums\FontWeight;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\Layout\Stack;
-use Filament\Tables\Columns\Layout\Split;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Support\Enums\FontWeight;
+use Filament\Tables\Columns\Layout\Split;
+use Filament\Tables\Columns\Layout\Stack;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
 
 class InternalNotesRelationManager extends RelationManager
 {
     protected static string $relationship = 'internalNotes';
-    
+
     public static function getTitle(Model $ownerRecord, string $pageClass): string
     {
         return __('creators-ticketing::resources.internal_note.title');
@@ -33,7 +32,7 @@ class InternalNotesRelationManager extends RelationManager
                             ->badge()
                             ->color('warning')
                             ->weight(FontWeight::Bold)
-                            ->formatStateUsing(fn($state) => "{$state} • " . __('creators-ticketing::resources.internal_note.agent_note')),
+                            ->formatStateUsing(fn ($state) => "{$state} • ".__('creators-ticketing::resources.internal_note.agent_note')),
 
                         TextColumn::make('created_at')
                             ->since()

@@ -151,7 +151,7 @@ return [
             'closed_tickets_desc' => 'Successfully resolved tickets',
         ],
     ],
-     'ticket' => [
+    'ticket' => [
         'title' => 'Tickets',
         'label' => 'Ticket',
         'plural_label' => 'Tickets',

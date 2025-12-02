@@ -2,9 +2,9 @@
 
 namespace daacreators\CreatorsTicketing\Filament\Resources\Departments\Pages;
 
+use daacreators\CreatorsTicketing\Filament\Resources\Departments\DepartmentResource;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
-use daacreators\CreatorsTicketing\Filament\Resources\Departments\DepartmentResource;
 
 class EditDepartment extends EditRecord
 {

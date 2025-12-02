@@ -11,8 +11,9 @@ class FormField extends Model
     {
         parent::__construct($attributes);
 
-        $this->setTable(config('creators-ticketing.table_prefix') . 'form_fields');
+        $this->setTable(config('creators-ticketing.table_prefix').'form_fields');
     }
+
     protected $guarded = [];
 
     protected $casts = [
@@ -22,6 +23,6 @@ class FormField extends Model
 
     public function form(): BelongsTo
     {
-    return $this->belongsTo(Form::class, 'form_id');
+        return $this->belongsTo(Form::class, 'form_id');
     }
 }

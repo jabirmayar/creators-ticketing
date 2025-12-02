@@ -13,7 +13,7 @@ class TicketActivity extends Model
     {
         parent::__construct($attributes);
 
-        $this->setTable(config('creators-ticketing.table_prefix') . 'ticket_activities');
+        $this->setTable(config('creators-ticketing.table_prefix').'ticket_activities');
     }
 
     public function ticket(): BelongsTo
@@ -25,6 +25,6 @@ class TicketActivity extends Model
     {
         $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
 
-        return $this->belongsTo($userModel, "user_id");
+        return $this->belongsTo($userModel, 'user_id');
     }
 }

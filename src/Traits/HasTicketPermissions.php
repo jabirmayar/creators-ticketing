@@ -10,8 +10,8 @@ trait HasTicketPermissions
     protected function getUserPermissions()
     {
         $user = Filament::auth()->user();
-        
-        if (!$user) {
+
+        if (! $user) {
             return [
                 'is_admin' => false,
                 'departments' => [],
@@ -28,7 +28,7 @@ trait HasTicketPermissions
         $userKey = $userInstance->getKeyName();
         $pivotUserColumn = "user_{$userKey}";
 
-        $departments = DB::table(config('creators-ticketing.table_prefix') . 'department_users')
+        $departments = DB::table(config('creators-ticketing.table_prefix').'department_users')
             ->where($pivotUserColumn, $user->{$userKey})
             ->get();
 
@@ -59,7 +59,7 @@ trait HasTicketPermissions
     protected function canUserViewAllTickets(): bool
     {
         $perms = $this->getUserPermissions();
-        
+
         if ($perms['is_admin']) {
             return true;
         }
@@ -76,16 +76,16 @@ trait HasTicketPermissions
     protected function getUserDepartmentIds(): array
     {
         $perms = $this->getUserPermissions();
+
         return $perms['departments'];
     }
 
-    
     public static function canAccessNavigation(array $parameters = []): bool
     {
-        $instance = new static();
+        $instance = new static;
         $perms = $instance->getUserPermissions();
 
-        return $perms['is_admin'] || !empty($perms['departments']);
+        return $perms['is_admin'] || ! empty($perms['departments']);
     }
 
     public static function shouldRegisterNavigation(array $parameters = []): bool
