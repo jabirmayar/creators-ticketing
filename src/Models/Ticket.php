@@ -39,14 +39,14 @@ class Ticket extends Model
 
     public function requester(): BelongsTo
     {
-        $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
+        $userModel = config('creators-ticketing.user_model');
 
         return $this->belongsTo($userModel, 'user_id');
     }
 
     public function assignee(): BelongsTo
     {
-        $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
+        $userModel = config('creators-ticketing.user_model');
 
         return $this->belongsTo($userModel, 'assignee_id');
     }
@@ -124,7 +124,7 @@ class Ticket extends Model
 
     public static function scopeForUser($query, $userId)
     {
-        $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
+        $userModel = config('creators-ticketing.user_model');
         $user = $userModel::find($userId);
 
         if (! $user) {

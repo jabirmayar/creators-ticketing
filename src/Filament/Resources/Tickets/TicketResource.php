@@ -550,7 +550,7 @@ class TicketResource extends Resource
 
     public static function table(Table $table): Table
     {
-        $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
+        $userModel = config('creators-ticketing.user_model');
         $permissions = (new static)->getUserPermissions();
         $user = Filament::auth()->user();
 

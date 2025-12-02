@@ -31,7 +31,7 @@ class AgentsRelationManager extends RelationManager
 
     public function table(Table $table): Table
     {
-        $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
+        $userModel = config('creators-ticketing.user_model');
 
         return $table
             ->recordTitleAttribute('name')

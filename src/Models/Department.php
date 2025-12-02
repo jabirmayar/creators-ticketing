@@ -22,7 +22,7 @@ class Department extends Model
 
     public function agents(): BelongsToMany
     {
-        $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
+        $userModel = config('creators-ticketing.user_model');
 
         $pivot = config('creators-ticketing.table_prefix').'department_users';
 

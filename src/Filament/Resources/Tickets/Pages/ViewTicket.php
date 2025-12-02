@@ -739,7 +739,7 @@ class ViewTicket extends ViewRecord
         $permissions = $this->getUserPermissions();
         $recordDepartmentId = $this->record->department_id;
 
-        $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
+        $userModel = config('creators-ticketing.user_model');
 
         $canChangeStatus = $permissions['is_admin'] ||
                            (isset($permissions['permissions'][$recordDepartmentId]) && $permissions['permissions'][$recordDepartmentId]['can_change_status']);
@@ -802,7 +802,7 @@ class ViewTicket extends ViewRecord
                                 ->label(__('creators-ticketing::resources.ticket.actions.select_assignee'))
                                 ->searchable()
                                 ->getSearchResultsUsing(function (string $search) {
-                                    $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
+                                    $userModel = config('creators-ticketing.user_model');
                                     $departmentId = $this->record->department_id;
                                     $userInstance = new $userModel;
                                     $userKey = $userInstance->getKeyName();
@@ -826,12 +826,12 @@ class ViewTicket extends ViewRecord
                                         ->mapWithKeys(fn ($user) => [$user->id => $user->name.' - '.$user->email]);
                                 })
                                 ->getOptionLabelUsing(function ($value) {
-                                    $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
+                                    $userModel = config('creators-ticketing.user_model');
 
                                     return $userModel::find($value)?->name.' - '.$userModel::find($value)?->email;
                                 })
                                 ->options(function () {
-                                    $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
+                                    $userModel = config('creators-ticketing.user_model');
                                     if (config('creators-ticketing.ticket_assign_scope') === 'department_only') {
                                         $departmentId = $this->record->department_id;
                                         if ($departmentId) {
@@ -853,7 +853,7 @@ class ViewTicket extends ViewRecord
                                  ->label(__('creators-ticketing::resources.ticket.actions.select_assignee'))
                                  ->searchable()
                                  ->getSearchResultsUsing(function (string $search) {
-                                     $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
+                                     $userModel = config('creators-ticketing.user_model');
 
                                      return $userModel::where('name', 'like', "%{$search}%")
                                          ->orWhere('email', 'like', "%{$search}%")
@@ -862,7 +862,7 @@ class ViewTicket extends ViewRecord
                                          ->mapWithKeys(fn ($user) => [$user->id => $user->name.' - '.$user->email]);
                                  })
                                  ->getOptionLabelUsing(function ($value) {
-                                     $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
+                                     $userModel = config('creators-ticketing.user_model');
 
                                      return $userModel::find($value)?->name.' - '.$userModel::find($value)?->email;
                                  })

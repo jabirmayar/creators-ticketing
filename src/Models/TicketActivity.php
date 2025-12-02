@@ -23,7 +23,7 @@ class TicketActivity extends Model
 
     public function user(): BelongsTo
     {
-        $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
+        $userModel = config('creators-ticketing.user_model');
 
         return $this->belongsTo($userModel, 'user_id');
     }

@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
+        $userModel = config('creators-ticketing.user_model');
         $userInstance = new $userModel;
         $userTable = $userInstance->getTable();
         $userKey = $userInstance->getKeyName();
