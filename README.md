@@ -9,22 +9,22 @@ A robust and dynamic ticketing system plugin for Filament 4, providing a complet
 ## Screenshots
 
 ![Tickets List](screenshots/tickets.png)
-*Tickets List*
+_Tickets List_
 
 ![Ticket View](screenshots/ticket-view.png)
-*Ticket View*
+_Ticket View_
 
 ![Submit Ticket Form](screenshots/submit-ticket.png)
-*Submit Ticket Form*
+_Submit Ticket Form_
 
 ![User Tickets List](screenshots/user-tickets-list.png)
-*User's Tickets List*
+_User's Tickets List_
 
 ![User Tickets List](screenshots/user-facing-chat-view-open.png)
-*User's Chat View*
+_User's Chat View_
 
 ![User Tickets List](screenshots/user-facing-chat-view-closed.png)
-*User's Chat View with Closed Status*
+_User's Chat View with Closed Status_
 
 ## Features
 
@@ -61,13 +61,14 @@ After installation, publish the config file:
 php artisan vendor:publish --tag="creators-ticketing-config"
 ```
 
-Setup: Filament Panel Integration: 
+Setup: Filament Panel Integration:
 The plugin integration code should be added to your main Filament admin panel provider file, which is typically located at:
 Open your AdminPanelProvider.php file and modify the panel() method as shown below. You need to include the use statement for the plugin class and call TicketingPlugin::make() inside the ->plugins() array.
 
 ```
 app/Providers/Filament/AdminPanelProvider.php
 ```
+
 ```php
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -94,9 +95,27 @@ Run the migrations:
 php artisan migrate
 ```
 
+### Adding User Model Relation
+
+Add the `tickets()` relation to your User model. Open your User model file (typically `app/Models/User.php`) and add the following method:
+
+```php
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use daacreators\CreatorsTicketing\Models\Ticket;
+
+/**
+ * @return HasMany<Ticket, $this>
+ */
+public function tickets(): HasMany
+{
+    return $this->hasMany(Ticket::class);
+}
+```
+
 ## Upgrading
 
 ### Upgrading from v1.0.5 to v1.0.6
+
 **⚠️ Important:** Version 1.0.6 introduces new fields to the database table. If you are upgrading from a previous version, you **must** run the migrations after updating the package to ensure the system functions correctly:
 
 ```bash
@@ -147,6 +166,7 @@ This plugin is fully localized and supports multiple languages out of the box. I
 - 🇨🇳 **Chinese (Simplified)** (`zh_CN`)
 
 ### Publishing Translations
+
 If you wish to modify the texts or add a new language, you can publish the translation files:
 
 ```bash
@@ -170,6 +190,7 @@ php artisan vendor:publish --tag="creators-ticketing-translations"
 ### Managing Tickets
 
 Tickets can be managed through the Filament admin panel. You can:
+
 - View all tickets **(New updates are marked with a "NEW" badge)**
 - Assign tickets to agents
 - Change ticket status
@@ -180,7 +201,7 @@ Tickets can be managed through the Filament admin panel. You can:
 ### Frontend Integration
 
 To add the tickets and ticket submission form to your frontend:
- 
+
 ```blade
 \\ Add to your blade file
 @livewire('creators-ticketing::ticket-submit-form')
@@ -207,6 +228,7 @@ class DashboardConfig extends Config
 ## Security
 
 The package includes built-in security features:
+
 - Private file storage for attachments
 - Permission-based access control
 - Department-level agent restrictions
