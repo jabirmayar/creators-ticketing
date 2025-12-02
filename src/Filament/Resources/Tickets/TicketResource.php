@@ -35,6 +35,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Components\Placeholder;
 use Filament\Schemas\Components\Component;
+use Filament\Infolists\Components\Livewire;
 use Filament\Infolists\Components\TextEntry;
 use daacreators\CreatorsTicketing\Models\Form;
 use Filament\Schemas\Components\Utilities\Get;
@@ -46,6 +47,7 @@ use Filament\Infolists\Components\Section as InfoSection;
 use daacreators\CreatorsTicketing\Traits\HasTicketingNavGroup;
 use daacreators\CreatorsTicketing\Traits\HasTicketPermissions;
 use daacreators\CreatorsTicketing\Filament\Resources\Tickets\Pages;
+use daacreators\CreatorsTicketing\Http\Livewire\TicketAttachmentsDisplay;
 use daacreators\CreatorsTicketing\Filament\Resources\Tickets\RelationManagers\InternalNotesRelationManager;
 
 class TicketResource extends Resource
@@ -428,11 +430,46 @@ class TicketResource extends Resource
                     break;
 
                 case 'file':
+                case 'file_multiple':
                     $fieldComponent = FileUpload::make($fieldName)
                         ->label($field->label)
                         ->required($field->is_required)
                         ->disabled($isDisabled)
-                        ->columnSpanFull();
+                        ->columnSpanFull()
+                        ->downloadable()
+                        ->openable()
+                        ->disk('private') 
+                        ->visibility('private') 
+                        ->preserveFilenames()
+                        ->directory(fn ($record) => $record 
+                            ? "ticket-attachments/{$record->id}" 
+                            : "ticket-attachments/temp" 
+                        );
+
+                    if ($field->type === 'file_multiple') {
+                        $fieldComponent->multiple();
+                    }
+
+                    $customRules = [];
+                    if (!empty($field->validation_rules)) {
+                        $rules = explode('|', $field->validation_rules);
+                        foreach ($rules as $rule) {
+                            $rule = trim($rule);
+                            if (str_starts_with($rule, 'max_files:')) {
+                                $fieldComponent->maxFiles((int) explode(':', $rule)[1]);
+                            } elseif (str_starts_with($rule, 'min_files:')) {
+                                $fieldComponent->minFiles((int) explode(':', $rule)[1]);
+                            } else {
+                                $customRules[] = $rule;
+                            }
+                        }
+                    }
+                    
+                    if (empty($customRules)) {
+                        $customRules[] = 'max:5120';
+                    }
+                    
+                    $fieldComponent->rules($customRules);
                     break;
             }
 
@@ -519,24 +556,32 @@ class TicketResource extends Resource
                                 
                                 if ($value !== null) {
                                     $processedFields[] = $field->name;
-                                    $schema[] = TextEntry::make("custom_fields.{$field->name}")
-                                        ->label($field->label)
-                                        ->formatStateUsing(function ($state) use ($field) {
-                                            if ($field->type === 'checkbox' || $field->type === 'toggle') {
-                                                return $state ? __('creators-ticketing::resources.ticket.yes') : __('creators-ticketing::resources.ticket.no');
-                                            }
-                                            
-                                            if ($field->type === 'select' || $field->type === 'radio') {
-                                                $options = $field->options ?? [];
-                                                return $options[$state] ?? $state;
-                                            }
-                                            
-                                            if ($field->type === 'file') {
-                                                return is_array($state) ? implode(', ', $state) : $state;
-                                            }
-                                            
-                                            return $state;
-                                        });
+
+                                    if ($field->type === 'file' || $field->type === 'file_multiple') {
+                                        $schema[] = Livewire::make(TicketAttachmentsDisplay::class)
+                                            ->label($field->label)
+                                            ->componentProperties([
+                                                'ticketId' => $record->id,
+                                                'files' => $value,
+                                                'label' => $field->label,
+                                            ]);
+                                    } else {
+                                        $schema[] = TextEntry::make("custom_fields.{$field->name}")
+                                            ->label($field->label)
+                                            ->formatStateUsing(function ($state) use ($field) {
+                                                if ($field->type === 'checkbox' || $field->type === 'toggle') {
+                                                    return $state ? __('creators-ticketing::resources.ticket.yes') : __('creators-ticketing::resources.ticket.no');
+                                                }
+                                                
+                                                if ($field->type === 'select' || $field->type === 'radio') {
+                                                    $options = $field->options ?? [];
+                                                    return $options[$state] ?? $state;
+                                                }
+                                                
+                                                return $state;
+                                            })
+                                            ->html(in_array($field->type, ['textarea', 'rich_editor']));
+                                    }
                                 }
                             }
                         }

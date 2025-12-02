@@ -83,8 +83,22 @@
                                     <div>
                                         <dt class="text-xs text-gray-500 uppercase tracking-wide mb-1.5">{{ str_replace('_', ' ', $key) }}</dt>
                                         <dd class="text-sm font-medium text-gray-900 bg-gray-50 rounded-lg px-3 py-2 border border-gray-200 break-words">
-                                            @if(is_array($value))
-                                                {{ implode(', ', $value) }}
+                                            @php
+                                                $isFileValue = is_array($value) && (empty($value) || (is_string(head($value)) && str_contains(head($value), 'ticket-attachments/')));
+                                            @endphp
+
+                                            @if($isFileValue)
+                                              @include('creators-ticketing::livewire.ticket-attachments-display', [
+                                                    'ticketId' => $selectedTicket->id,
+                                                    'files' => is_array($value) ? $value : [$value],
+                                                    'label' => null,
+                                                ])
+                                            @elseif(is_array($value))
+                                                <ul class="list-none space-y-1">
+                                                    @foreach($value as $item)
+                                                        <li>{{ is_string($item) ? $item : json_encode($item) }}</li>
+                                                    @endforeach
+                                                </ul>
                                             @else
                                                 {{ $value }}
                                             @endif
@@ -136,18 +150,19 @@
                         <div class="border-b border-gray-200">
                             <nav class="-mb-px flex space-x-8">
                                 <button 
-                                    wire:click="$set('showForm', true)"
-                                    class="whitespace-nowrap py-4 px-1 border-b-2 font-semibold text-sm transition {{ $showForm ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}"
+                                    wire:click="showNewTicketForm"
+                                    class="whitespace-nowrap py-4 px-1 border-b-2 font-semibold text-sm transition {{ $activeTab === 'new' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}"
                                 >
                                     <svg class="w-5 h-5 inline-block mr-2 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                                     </svg>
                                     {{ __('creators-ticketing::resources.frontend.new_ticket') }}
                                 </button>
+                                
                                 @if(auth()->check())
                                     <button 
-                                        wire:click="$set('showForm', false)"
-                                        class="whitespace-nowrap py-4 px-1 border-b-2 font-semibold text-sm transition {{ !$showForm ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}"
+                                        wire:click="showList"
+                                        class="whitespace-nowrap py-4 px-1 border-b-2 font-semibold text-sm transition {{ $activeTab === 'list' || $activeTab === 'view' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}"
                                     >
                                         <svg class="w-5 h-5 inline-block mr-2 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
@@ -230,7 +245,8 @@
                                                 </div>
 
                                                 @foreach($form_fields as $field)
-                                                    <div class="{{ in_array($field['type'], ['textarea', 'rich_editor', 'file']) ? 'col-span-1 md:col-span-2' : 'col-span-1' }}">
+                                                    <div wire:key="field-wrapper-{{ $field['name'] }}" 
+                                                        class="{{ in_array($field['type'], ['textarea', 'rich_editor', 'file', 'file_multiple']) ? 'col-span-1 md:col-span-2' : 'col-span-1' }}">
                                                         <label class="block text-sm font-medium text-gray-700 mb-2">
                                                             {{ $field['label'] }} 
                                                             @if($field['is_required']) <span class="text-red-500">*</span> @endif
@@ -239,7 +255,7 @@
                                                         @switch($field['type'])
                                                             @case('textarea')
                                                                 <textarea 
-                                                                    wire:model.blur="custom_fields.{{ $field['name'] }}" 
+                                                                    wire:model="custom_fields.{{ $field['name'] }}" 
                                                                     rows="5" 
                                                                     class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-3 resize-y transition-shadow"
                                                                 ></textarea>
@@ -271,39 +287,138 @@
                                                                 @break
 
                                                             @case('file')
-                                                                <div class="w-full">
-                                                                    <label class="flex flex-col items-center justify-center w-full h-40 border-2 border-gray-300 border-dashed rounded-xl cursor-pointer bg-gray-50 hover:bg-blue-50 hover:border-blue-400 transition-all duration-200 group relative overflow-hidden">
-                                                                        <div class="flex flex-col items-center justify-center pt-5 pb-6 z-10 transition-transform group-hover:-translate-y-1">
-                                                                            <div class="p-3 bg-white rounded-full shadow-sm mb-3 group-hover:scale-110 transition-transform">
-                                                                                <svg class="w-6 h-6 text-gray-400 group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                                                            @case('file_multiple')
+                                                                    <div class="w-full" x-data="{ isUploading: false }">
+                                                                        @php
+                                                                            $isMultiple = $field['type'] === 'file_multiple';
+                                                                            $rulesString = $field['validation_rules'] ?? '';
+                                                                            
+                                                                            preg_match('/mimes:([^|]+)/', $rulesString, $mimes);
+                                                                            preg_match('/max:(\d+)/', $rulesString, $maxSize);
+                                                                            preg_match('/max_files:(\d+)/', $rulesString, $maxFiles);
+                                                                            
+                                                                            $maxFilesCount = $maxFiles[1] ?? null;
+
+                                                                            $accept = '';
+                                                                            if (!empty($mimes[1])) {
+                                                                                $extensions = explode(',', $mimes[1]);
+                                                                                $accept = implode(',', array_map(fn($ext) => '.' . trim($ext), $extensions));
+                                                                            }
+                                                                        @endphp
+
+                                                                        <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-xl cursor-pointer bg-gray-50 hover:bg-blue-50 hover:border-blue-400 transition-all duration-200 group relative overflow-hidden">
+                                                                            <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                                                                <div class="p-2 bg-white rounded-full shadow-sm mb-2 group-hover:scale-110 transition-transform">
+                                                                                    <svg class="w-6 h-6 text-gray-400 group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                                                                                </div>
+                                                                                <p class="text-sm text-gray-600 group-hover:text-gray-800">
+                                                                                    {{ $isMultiple ? __('creators-ticketing::resources.frontend.upload_click') : 'Click to upload a file' }}
+                                                                                </p>
+                                                                                
+                                                                                @if(!empty($field['help_text']))
+                                                                                    <p class="text-xs text-gray-500 mt-1">{{ $field['help_text'] }}</p>
+                                                                                @endif
+                                                                                
+                                                                                <p class="text-xs text-gray-400 mt-2">
+                                                                                    @if(!empty($mimes[1]))
+                                                                                        <span class="uppercase">{{ str_replace(',', ', ', $mimes[1]) }}</span>
+                                                                                    @endif
+                                                                                    
+                                                                                    @if($isMultiple && $maxFilesCount)
+                                                                                        <span class="ml-2 font-semibold">MAX FILES: {{ $maxFilesCount }}</span>
+                                                                                    @endif
+
+                                                                                    @if(!empty($maxSize[1]))
+                                                                                        <span class="ml-2">MAX SIZE: {{ round($maxSize[1] / 1024, 1) }}MB</span>
+                                                                                    @endif
+                                                                                </p>
                                                                             </div>
-                                                                            <p class="mb-1 text-sm text-gray-600 font-medium group-hover:text-gray-800">
-                                                                                {{ __('creators-ticketing::resources.frontend.upload_click') }}
-                                                                            </p>
-                                                                            <p class="text-xs text-gray-400 group-hover:text-gray-500">{{ __('creators-ticketing::resources.frontend.upload_multiple') }}</p>
+                                                                            
+                                                                            <input 
+                                                                                type="file" 
+                                                                                class="hidden" 
+                                                                                accept="{{ $accept }}"
+                                                                                @if($isMultiple) multiple @endif
+                                                                                @change="
+                                                                                    const maxFiles = {{ $maxFilesCount ?? 'null' }};
+                                                                                    const files = $el.files;
+
+                                                                                    if (maxFiles && files.length > maxFiles) {
+                                                                                        alert('{{ __('creators-ticketing::resources.frontend.max_files_error', ['count' => $maxFilesCount ?? 0]) }}');
+                                                                                        $el.value = '';
+                                                                                        return;
+                                                                                    }
+
+                                                                                    isUploading = true;
+
+                                                                                    @if($isMultiple)
+                                                                                        $wire.uploadMultiple('custom_fields.{{ $field['name'] }}', files, 
+                                                                                            () => { isUploading = false; }, 
+                                                                                            () => { isUploading = false; $el.value = '' }, 
+                                                                                            (event) => {} 
+                                                                                        );
+                                                                                    @else
+                                                                                        $wire.upload('custom_fields.{{ $field['name'] }}', files[0], 
+                                                                                            () => { isUploading = false; }, 
+                                                                                            () => { isUploading = false; $el.value = '' },
+                                                                                            (event) => {}
+                                                                                        );
+                                                                                    @endif
+                                                                                "
+                                                                            >
+                                                                        </label>
+                                                                        
+                                                                        @if(isset($custom_fields[$field['name']]))
+                                                                            <ul class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                                                @php
+                                                                                    $files = is_array($custom_fields[$field['name']]) 
+                                                                                        ? $custom_fields[$field['name']] 
+                                                                                        : [$custom_fields[$field['name']]];
+                                                                                @endphp
+                                                                                @foreach($files as $index => $file)
+                                                                                    @if($file)
+                                                                                    <li class="flex items-center justify-between p-2 bg-white border border-gray-200 rounded-lg shadow-sm">
+                                                                                        <div class="flex items-center gap-2 overflow-hidden">
+                                                                                            @if(method_exists($file, 'temporaryUrl') && in_array(strtolower($file->extension() ?? ''), ['jpg','jpeg','png','gif','webp']))
+                                                                                                <img src="{{ $file->temporaryUrl() }}" class="w-8 h-8 rounded object-cover border border-gray-100">
+                                                                                            @else
+                                                                                                <div class="w-8 h-8 rounded bg-gray-100 flex items-center justify-center text-gray-400">
+                                                                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                                                                                </div>
+                                                                                            @endif
+                                                                                            <div class="flex-1 min-w-0">
+                                                                                                <span class="text-xs text-gray-600 truncate block">{{ $file->getClientOriginalName() }}</span>
+                                                                                                <span class="text-xs text-gray-400">{{ number_format($file->getSize() / 1024, 1) }} KB</span>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                        <button type="button" wire:click="removeFile('{{ $field['name'] }}', {{ $isMultiple ? $index : 'null' }})" class="p-1 text-gray-400 hover:text-red-500 rounded-full hover:bg-red-50 transition-colors">
+                                                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                                                        </button>
+                                                                                    </li>
+                                                                                    @endif
+                                                                                @endforeach
+                                                                            </ul>
+                                                                        @endif
+
+                                                                       <div x-show="isUploading" style="display: none;" class="w-full mt-2">
+                                                                            <div class="flex items-center gap-2 text-sm text-blue-600 bg-blue-50 py-1 px-3 rounded-md">
+                                                                                <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                                                                <span class="font-medium">{{ __('creators-ticketing::resources.frontend.uploading') }}</span>
+                                                                            </div>
                                                                         </div>
-                                                                        <input type="file" wire:model="custom_fields.{{ $field['name'] }}" class="hidden" multiple>
-                                                                        <div class="absolute inset-0 bg-blue-500 opacity-0 group-hover:opacity-5 transition-opacity pointer-events-none"></div>
-                                                                    </label>
-                                                                    
-                                                                    {{-- Upload Progress --}}
-                                                                    <div wire:loading wire:target="custom_fields.{{ $field['name'] }}" class="w-full mt-2">
-                                                                        <div class="flex items-center justify-center gap-2 text-sm text-blue-600 bg-blue-50 py-1 rounded-md">
-                                                                            <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                                                            <span class="font-medium">{{ __('creators-ticketing::resources.frontend.uploading') }}</span>
-                                                                        </div>
+
                                                                     </div>
-                                                                </div>
                                                                 @break
 
                                                             @default
                                                                 <input 
                                                                     type="{{ $field['type'] }}" 
-                                                                    wire:model.blur="custom_fields.{{ $field['name'] }}" 
+                                                                    wire:model="custom_fields.{{ $field['name'] }}" 
                                                                     class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2.5 transition-shadow"
                                                                 >
                                                         @endswitch
-                                                        @error("custom_fields.{$field['name']}") <p class="mt-1 text-sm text-red-600 animate-pulse flex items-center gap-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>{{ $message }}</p> @enderror
+                                                        @error("custom_fields.{$field['name']}") <p class="mt-1 text-sm text-red-600 animate-pulse">{{ $message }}</p> @enderror
+                                                        @error("custom_fields.{$field['name']}.*") <p class="mt-1 text-sm text-red-600 animate-pulse">{{ $message }}</p> @enderror
                                                     </div>
                                                 @endforeach
 

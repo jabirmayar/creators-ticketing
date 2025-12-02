@@ -14,6 +14,7 @@ use daacreators\CreatorsTicketing\Http\Livewire\PublicTicketChat;
 use daacreators\CreatorsTicketing\Http\Livewire\TicketSubmitForm;
 use daacreators\CreatorsTicketing\Http\Livewire\TicketChatMessages;
 use daacreators\CreatorsTicketing\Filament\Widgets\TicketStatsWidget;
+use daacreators\CreatorsTicketing\Http\Livewire\TicketAttachmentsDisplay;
 
 class TicketingServiceProvider extends ServiceProvider
 {
@@ -83,6 +84,8 @@ class TicketingServiceProvider extends ServiceProvider
         Livewire::component('creators-ticketing::public-ticket-chat', PublicTicketChat::class);
         
         Livewire::component('creators-ticketing::ticket-chat-messages', TicketChatMessages::class);
+
+        Livewire::component('creators-ticketing::ticket-attachments-display', TicketAttachmentsDisplay::class);
 
         Livewire::component('creators-ticketing::ticket-timeline', TicketTimeline::class);
 

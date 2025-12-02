@@ -48,6 +48,7 @@ return [
             'date' => '日期',
             'datetime' => '日期时间',
             'file' => '文件上传',
+            'file_multiple' => '上传多个文件',
         ],
     ],
     'department' => [
@@ -286,6 +287,8 @@ return [
         'just_now' => '刚刚',
         'form_data_label' => '工单详情',
         'new_reply' => '新回复',
+        'max_files_error' => '您最多只能上传 :count 个文件。',
+        'no_file_attached' => '未附加任何文件',
     ],
     'timeline' => [
         'system' => '系统',

@@ -17,6 +17,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
 use Illuminate\Database\Eloquent\Model;
+use Filament\Forms\Components\Placeholder;
 use Filament\Resources\RelationManagers\RelationManager;
 
 class FieldsRelationManager extends RelationManager
@@ -111,11 +112,16 @@ class FieldsRelationManager extends RelationManager
                     'date' => __('creators-ticketing::resources.field.types.date'),
                     'datetime' => __('creators-ticketing::resources.field.types.datetime'),
                     'file' => __('creators-ticketing::resources.field.types.file'),
+                    'file_multiple' =>  __('creators-ticketing::resources.field.types.file_multiple'), 
                 ])
                 ->live()
-                ->afterStateUpdated(function ($state, callable $set) {
+                ->afterStateUpdated(function ($state, callable $set, callable $get) {
                     if (!in_array($state, ['select', 'radio'])) {
                         $set('options', null);
+                    }
+                    
+                    if (in_array($state, ['file', 'file_multiple']) && empty($get('validation_rules'))) {
+                        $set('validation_rules', 'mimes:jpg,jpeg,png,pdf,doc,docx|max:5120');
                     }
                 }),
 
@@ -139,8 +145,15 @@ class FieldsRelationManager extends RelationManager
 
             Textarea::make('validation_rules')
                 ->label(__('creators-ticketing::resources.field.validation_rules'))
-                ->rows(2)
-                ->helperText(__('creators-ticketing::resources.field.validation_helper'))
+                ->placeholder('e.g. mimes:jpg,png|max:2048')
+                ->rows(3)
+                ->columnSpanFull()
+                ->visible(fn ($get) => !empty($get('type'))),
+
+            Placeholder::make('validation_examples')
+                ->label(__('creators-ticketing::resources.field.validation_helper'))
+                ->content(fn ($get) => $this->getValidationExamples($get('type')))
+                ->visible(fn ($get) => !empty($get('type')))
                 ->columnSpanFull(),
 
             TextInput::make('order')
@@ -156,5 +169,23 @@ class FieldsRelationManager extends RelationManager
                 })
                 ->helperText(__('creators-ticketing::resources.field.order_helper')),
         ];
+    }
+
+    protected function getValidationExamples(string $type): string
+    {
+        $examples = [
+            'text' => 'min:3|max:255|regex:/^[a-zA-Z0-9\s]+$/',
+            'textarea' => 'min:10|max:5000',
+            'email' => 'email:rfc,dns',
+            'tel' => 'regex:/^[0-9\+\-\(\)\s]+$/',
+            'number' => 'integer|min:1|max:100',
+            'url' => 'url|active_url',
+            'file' => 'mimes:jpg,png,pdf|max:5120',
+            'file_multiple' => 'mimes:jpg,png,pdf|max:5120|max_files:5',
+            'date' => 'date|after:today',
+            'datetime' => 'date|after:now',
+        ];
+
+        return $examples[$type] ?? 'max:255';
     }
 }

@@ -23,6 +23,7 @@ use Filament\Schemas\Components\Livewire;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Component;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\ViewEntry;
 use daacreators\CreatorsTicketing\Models\Form;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Form as SchemaForm;
@@ -30,10 +31,12 @@ use daacreators\CreatorsTicketing\Models\Department;
 use daacreators\CreatorsTicketing\Models\TicketStatus;
 use daacreators\CreatorsTicketing\Enums\TicketPriority;
 use Filament\Schemas\Components\Actions as SchemaActions;
+use daacreators\CreatorsTicketing\Support\TicketFileHelper;
 use daacreators\CreatorsTicketing\Traits\HasTicketPermissions;
 use daacreators\CreatorsTicketing\Http\Livewire\TicketTimeline;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use daacreators\CreatorsTicketing\Http\Livewire\TicketChatMessages;
+use daacreators\CreatorsTicketing\Http\Livewire\TicketAttachmentsDisplay;
 use daacreators\CreatorsTicketing\Filament\Resources\Tickets\TicketResource;
 use daacreators\CreatorsTicketing\Filament\Resources\Tickets\RelationManagers\InternalNotesRelationManager;
 
@@ -461,12 +464,24 @@ class ViewTicket extends ViewRecord
             $value = $this->record->custom_fields[$field->name] ?? null;
             
             if ($value !== null) {
-                $formattedValue = $this->formatCustomFieldValue($value, $field);
-                
-                $entries[] = TextEntry::make("custom_field_{$field->name}")
-                    ->label($field->label)
-                    ->default($formattedValue)
-                    ->html($field->type === 'textarea');
+                if ($field->type === 'file' || $field->type === 'file_multiple') {
+                    $entries[] = Livewire::make(
+                                    TicketAttachmentsDisplay::class,
+                                    [
+                                        'ticketId' => $this->record->id,
+                                        'files' => $value,
+                                        'label' => $field->label,
+                                    ]
+                            )->key(fn() => 'files-' . $this->record->id);
+                } else {
+                    $formattedValue = $this->formatCustomFieldValue($value, $field);
+                    $isHtml = in_array($field->type, ['textarea', 'rich_editor']);
+                    
+                    $entries[] = TextEntry::make("custom_field_{$field->name}")
+                        ->label($field->label)
+                        ->state($formattedValue)
+                        ->html($isHtml);
+                }
             }
         }
 
@@ -482,13 +497,6 @@ class ViewTicket extends ViewRecord
         if ($field->type === 'select' || $field->type === 'radio') {
             $options = $field->options ?? [];
             return $options[$value] ?? $value;
-        }
-        
-        if ($field->type === 'file') {
-            if (is_array($value)) {
-                return implode(', ', array_map(fn($file) => basename($file), $value));
-            }
-            return basename($value);
         }
         
         if ($field->type === 'date' || $field->type === 'datetime') {
@@ -524,6 +532,7 @@ class ViewTicket extends ViewRecord
         return $schema
             ->schema([
                 Tabs::make('Tabs')
+                    ->id('ticket-view-tabs') 
                     ->tabs([
                         Tab::make(__('creators-ticketing::resources.ticket.ticket_view'))
                             ->icon('heroicon-o-ticket')
