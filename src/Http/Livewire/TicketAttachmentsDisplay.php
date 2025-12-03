@@ -7,7 +7,9 @@ use Livewire\Component;
 class TicketAttachmentsDisplay extends Component
 {
     public $ticketId;
+
     public $files;
+
     public $label;
 
     public function mount($ticketId, $files, $label = null)

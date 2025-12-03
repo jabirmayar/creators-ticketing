@@ -9,7 +9,9 @@ class TicketFileHelper
 {
     public static function processUploadedFiles(mixed $files, string $ticketId): array
     {
-        if (empty($files)) return [];
+        if (empty($files)) {
+            return [];
+        }
 
         $files = is_array($files) ? $files : [$files];
         $storedPaths = [];
@@ -27,5 +29,4 @@ class TicketFileHelper
 
         return $storedPaths;
     }
-
 }

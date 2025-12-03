@@ -14,8 +14,8 @@ trait HasNavigationVisibility
     public static function canAccessNavigation(): bool
     {
         $user = Filament::auth()->user();
-        
-        if (!$user) {
+
+        if (! $user) {
             return false;
         }
 

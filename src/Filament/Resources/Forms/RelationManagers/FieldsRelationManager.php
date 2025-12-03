@@ -2,23 +2,21 @@
 
 namespace daacreators\CreatorsTicketing\Filament\Resources\Forms\RelationManagers;
 
-use Filament\Forms;
-use Filament\Tables;
-use Filament\Tables\Table;
-use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Toggle;
 use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
 use Filament\Forms\Components\KeyValue;
-use Filament\Forms\Components\Textarea;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Forms\Components\TextInput;
-use Illuminate\Database\Eloquent\Model;
 use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class FieldsRelationManager extends RelationManager
 {
@@ -52,8 +50,8 @@ class FieldsRelationManager extends RelationManager
                 TextColumn::make('is_required')
                     ->label(__('creators-ticketing::resources.field.is_required'))
                     ->badge()
-                    ->formatStateUsing(fn ($state) => $state 
-                        ? __('creators-ticketing::resources.field.required') 
+                    ->formatStateUsing(fn ($state) => $state
+                        ? __('creators-ticketing::resources.field.required')
                         : __('creators-ticketing::resources.field.optional')
                     )
                     ->color(fn ($state) => $state ? 'success' : 'gray'),
@@ -112,14 +110,14 @@ class FieldsRelationManager extends RelationManager
                     'date' => __('creators-ticketing::resources.field.types.date'),
                     'datetime' => __('creators-ticketing::resources.field.types.datetime'),
                     'file' => __('creators-ticketing::resources.field.types.file'),
-                    'file_multiple' =>  __('creators-ticketing::resources.field.types.file_multiple'), 
+                    'file_multiple' => __('creators-ticketing::resources.field.types.file_multiple'),
                 ])
                 ->live()
                 ->afterStateUpdated(function ($state, callable $set, callable $get) {
-                    if (!in_array($state, ['select', 'radio'])) {
+                    if (! in_array($state, ['select', 'radio'])) {
                         $set('options', null);
                     }
-                    
+
                     if (in_array($state, ['file', 'file_multiple']) && empty($get('validation_rules'))) {
                         $set('validation_rules', 'mimes:jpg,jpeg,png,pdf,doc,docx|max:5120');
                     }
@@ -148,12 +146,12 @@ class FieldsRelationManager extends RelationManager
                 ->placeholder('e.g. mimes:jpg,png|max:2048')
                 ->rows(3)
                 ->columnSpanFull()
-                ->visible(fn ($get) => !empty($get('type'))),
+                ->visible(fn ($get) => ! empty($get('type'))),
 
             Placeholder::make('validation_examples')
                 ->label(__('creators-ticketing::resources.field.validation_helper'))
                 ->content(fn ($get) => $this->getValidationExamples($get('type')))
-                ->visible(fn ($get) => !empty($get('type')))
+                ->visible(fn ($get) => ! empty($get('type')))
                 ->columnSpanFull(),
 
             TextInput::make('order')
@@ -163,8 +161,9 @@ class FieldsRelationManager extends RelationManager
                     if ($record) {
                         return $record->order;
                     }
-                    
+
                     $maxOrder = $this->getOwnerRecord()->fields()->max('order');
+
                     return $maxOrder !== null ? $maxOrder + 1 : 0;
                 })
                 ->helperText(__('creators-ticketing::resources.field.order_helper')),

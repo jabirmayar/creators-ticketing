@@ -10,12 +10,12 @@ return new class extends Migration
     {
         $prefix = config('creators-ticketing.table_prefix', 'ct_');
 
-        Schema::table($prefix . 'tickets', function (Blueprint $table) use ($prefix) {
+        Schema::table($prefix.'tickets', function (Blueprint $table) use ($prefix) {
             $table->foreignId('form_id')
-                  ->nullable()
-                  ->after('department_id')
-                  ->constrained($prefix . 'forms')
-                  ->nullOnDelete();
+                ->nullable()
+                ->after('department_id')
+                ->constrained($prefix.'forms')
+                ->nullOnDelete();
         });
     }
 
@@ -23,8 +23,8 @@ return new class extends Migration
     {
         $prefix = config('creators-ticketing.table_prefix', 'ct_');
 
-        Schema::table($prefix . 'tickets', function (Blueprint $table) {
-            $table->dropForeign([ 'form_id' ]); 
+        Schema::table($prefix.'tickets', function (Blueprint $table) {
+            $table->dropForeign(['form_id']);
             $table->dropColumn('form_id');
         });
     }

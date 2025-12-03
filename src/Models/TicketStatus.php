@@ -12,8 +12,9 @@ class TicketStatus extends Model
     {
         parent::__construct($attributes);
 
-        $this->setTable(config('creators-ticketing.table_prefix') . 'ticket_statuses');
+        $this->setTable(config('creators-ticketing.table_prefix').'ticket_statuses');
     }
+
     protected $casts = [
         'is_default_for_new' => 'boolean',
         'is_closing_status' => 'boolean',

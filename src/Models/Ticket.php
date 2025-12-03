@@ -2,11 +2,11 @@
 
 namespace daacreators\CreatorsTicketing\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use daacreators\CreatorsTicketing\Enums\TicketPriority;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Ticket extends Model
 {
@@ -34,18 +34,20 @@ class Ticket extends Model
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
-        $this->setTable(config('creators-ticketing.table_prefix') . 'tickets');
+        $this->setTable(config('creators-ticketing.table_prefix').'tickets');
     }
 
     public function requester(): BelongsTo
     {
         $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
+
         return $this->belongsTo($userModel, 'user_id');
     }
 
     public function assignee(): BelongsTo
     {
         $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
+
         return $this->belongsTo($userModel, 'assignee_id');
     }
 
@@ -105,9 +107,9 @@ class Ticket extends Model
 
     public function isUnseen(): bool
     {
-        return !$this->is_seen;
+        return ! $this->is_seen;
     }
-    
+
     public function getCustomField(string $fieldName)
     {
         return $this->custom_fields[$fieldName] ?? null;
@@ -125,7 +127,7 @@ class Ticket extends Model
         $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
         $user = $userModel::find($userId);
 
-        if (!$user) {
+        if (! $user) {
             return $query->where('id', null);
         }
 
@@ -136,7 +138,7 @@ class Ticket extends Model
             return $query;
         }
 
-        $departmentIds = \DB::table(config('creators-ticketing.table_prefix') . 'department_users')
+        $departmentIds = \DB::table(config('creators-ticketing.table_prefix').'department_users')
             ->where('user_id', $userId)
             ->pluck('department_id')
             ->toArray();
@@ -144,20 +146,20 @@ class Ticket extends Model
         if (empty($departmentIds)) {
             return $query->where(function ($q) use ($userId) {
                 $q->where('user_id', $userId)
-                  ->orWhere('assignee_id', $userId);
+                    ->orWhere('assignee_id', $userId);
             });
         }
 
-        $canViewAllDepartments = \DB::table(config('creators-ticketing.table_prefix') . 'department_users')
+        $canViewAllDepartments = \DB::table(config('creators-ticketing.table_prefix').'department_users')
             ->where('user_id', $userId)
             ->where('can_view_all_tickets', true)
             ->pluck('department_id')
             ->toArray();
 
-        return $query->where(function ($q) use ($userId, $departmentIds, $canViewAllDepartments) {
+        return $query->where(function ($q) use ($userId, $canViewAllDepartments) {
             $q->where('user_id', $userId)
-              ->orWhere('assignee_id', $userId)
-              ->orWhereIn('department_id', $canViewAllDepartments);
+                ->orWhere('assignee_id', $userId)
+                ->orWhereIn('department_id', $canViewAllDepartments);
         });
     }
 
@@ -166,9 +168,9 @@ class Ticket extends Model
         return Attribute::make(
             get: function () {
                 $form = $this->department?->forms()->with('fields')->first();
-                
-                if (!$form || !$this->custom_fields) {
-                    return 'Ticket #' . $this->ticket_uid;
+
+                if (! $form || ! $this->custom_fields) {
+                    return 'Ticket #'.$this->ticket_uid;
                 }
 
                 $titleField = $form->fields->first(function ($field) {
@@ -185,10 +187,11 @@ class Ticket extends Model
 
                 if ($firstTextField && isset($this->custom_fields[$firstTextField->name])) {
                     $value = $this->custom_fields[$firstTextField->name];
-                    return is_string($value) ? substr(strip_tags($value), 0, 100) : 'Ticket #' . $this->ticket_uid;
+
+                    return is_string($value) ? substr(strip_tags($value), 0, 100) : 'Ticket #'.$this->ticket_uid;
                 }
 
-                return 'Ticket #' . $this->ticket_uid;
+                return 'Ticket #'.$this->ticket_uid;
             }
         );
     }
@@ -198,8 +201,8 @@ class Ticket extends Model
         return Attribute::make(
             get: function () {
                 $form = $this->department?->forms()->with('fields')->first();
-                
-                if (!$form || !$this->custom_fields) {
+
+                if (! $form || ! $this->custom_fields) {
                     return '';
                 }
 

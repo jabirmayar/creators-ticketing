@@ -3,34 +3,31 @@
 namespace daacreators\CreatorsTicketing\Filament\Resources\Departments;
 
 use BackedEnum;
-use Filament\Tables;
-use Filament\Tables\Table;
-use Illuminate\Support\Str;
-use Filament\Schemas\Schema;
-use Filament\Actions\EditAction;
-use Filament\Resources\Resource;
+use daacreators\CreatorsTicketing\Filament\Resources\Departments\RelationManagers\AgentsRelationManager;
+use daacreators\CreatorsTicketing\Models\Department;
+use daacreators\CreatorsTicketing\Traits\HasNavigationVisibility;
+use daacreators\CreatorsTicketing\Traits\HasTicketingNavGroup;
 use Filament\Actions\BulkActionGroup;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Toggle;
 use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Resources\Resource;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Forms\Components\TextInput;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
-use daacreators\CreatorsTicketing\Models\Form;
-use Filament\Schemas\Components\Utilities\Set;
-use daacreators\CreatorsTicketing\Models\Department;
-use daacreators\CreatorsTicketing\Traits\HasTicketingNavGroup;
-use daacreators\CreatorsTicketing\Traits\HasNavigationVisibility;
-use daacreators\CreatorsTicketing\Filament\Resources\Departments\Pages;
-use daacreators\CreatorsTicketing\Filament\Resources\Departments\RelationManagers\AgentsRelationManager;
+use Filament\Tables\Table;
+use Illuminate\Support\Str;
 
 class DepartmentResource extends Resource
 {
     use HasNavigationVisibility, HasTicketingNavGroup;
-    
+
     protected static ?string $model = Department::class;
 
     protected static BackedEnum|string|null $navigationIcon = 'heroicon-o-building-office-2';
@@ -115,11 +112,10 @@ class DepartmentResource extends Resource
                     ->listWithLineBreaks()
                     ->expandableLimitedList()
                     ->badge()
-                    ->tooltip(fn ($record) =>
-                        $record->forms->pluck('name')->implode(', ')
+                    ->tooltip(fn ($record) => $record->forms->pluck('name')->implode(', ')
                     )
                     ->color('info')
-                    ->separator(', '), 
+                    ->separator(', '),
 
                 TextColumn::make('visibility')
                     ->label(__('creators-ticketing::resources.department.visibility'))

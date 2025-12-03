@@ -2,12 +2,12 @@
 
 namespace daacreators\CreatorsTicketing;
 
-use Filament\Panel;
-use Filament\Contracts\Plugin;
+use daacreators\CreatorsTicketing\Filament\Resources\Departments\DepartmentResource;
 use daacreators\CreatorsTicketing\Filament\Resources\Forms\FormResource;
 use daacreators\CreatorsTicketing\Filament\Resources\Tickets\TicketResource;
-use daacreators\CreatorsTicketing\Filament\Resources\Departments\DepartmentResource;
 use daacreators\CreatorsTicketing\Filament\Resources\TicketStatuses\TicketStatusResource;
+use Filament\Contracts\Plugin;
+use Filament\Panel;
 
 class TicketingPlugin implements Plugin
 {
@@ -33,6 +33,6 @@ class TicketingPlugin implements Plugin
 
     public static function make(): static
     {
-        return new static();
+        return new static;
     }
 }

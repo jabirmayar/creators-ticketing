@@ -4,16 +4,18 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
-    public function up(): void {
+return new class extends Migration
+{
+    public function up(): void
+    {
         $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
         $userInstance = new $userModel;
         $userTable = $userInstance->getTable();
         $userKey = $userInstance->getKeyName();
 
-        Schema::create(config('creators-ticketing.table_prefix') . 'department_users', function (Blueprint $table) use ($userTable, $userKey) {
+        Schema::create(config('creators-ticketing.table_prefix').'department_users', function (Blueprint $table) use ($userTable, $userKey) {
             $table->foreignId('department_id')
-                ->constrained(config('creators-ticketing.table_prefix') . 'departments')
+                ->constrained(config('creators-ticketing.table_prefix').'departments')
                 ->cascadeOnDelete();
 
             $table->unsignedBigInteger("user_{$userKey}");
@@ -38,7 +40,8 @@ return new class extends Migration {
         });
     }
 
-    public function down(): void {
-        Schema::dropIfExists(config('creators-ticketing.table_prefix') . 'department_users');
+    public function down(): void
+    {
+        Schema::dropIfExists(config('creators-ticketing.table_prefix').'department_users');
     }
 };

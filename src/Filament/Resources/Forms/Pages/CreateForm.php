@@ -2,8 +2,8 @@
 
 namespace daacreators\CreatorsTicketing\Filament\Resources\Forms\Pages;
 
-use Filament\Resources\Pages\CreateRecord;
 use daacreators\CreatorsTicketing\Filament\Resources\Forms\FormResource;
+use Filament\Resources\Pages\CreateRecord;
 
 class CreateForm extends CreateRecord
 {

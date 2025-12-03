@@ -3,10 +3,10 @@
 namespace Daacreators\CreatorsTicketing\Observers;
 
 use App\Models\User;
-use Illuminate\Support\Str;
+use Daacreators\CreatorsTicketing\Enums\TicketPriority;
 use Daacreators\CreatorsTicketing\Models\Ticket;
 use Daacreators\CreatorsTicketing\Models\TicketStatus;
-use Daacreators\CreatorsTicketing\Enums\TicketPriority;
+use Illuminate\Support\Str;
 
 class TicketObserver
 {
@@ -49,7 +49,7 @@ class TicketObserver
         if ($ticket->isDirty('assignee_id')) {
             $oldAssigneeId = $ticket->getOriginal('assignee_id');
             $newAssigneeId = $ticket->assignee_id;
-            
+
             $oldAssignee = $oldAssigneeId ? User::find($oldAssigneeId) : null;
             $newAssignee = $newAssigneeId ? User::find($newAssigneeId) : null;
 
@@ -64,7 +64,7 @@ class TicketObserver
         if ($ticket->isDirty('ticket_status_id')) {
             $oldStatusId = $ticket->getOriginal('ticket_status_id');
             $newStatusId = $ticket->ticket_status_id;
-            
+
             $oldStatus = TicketStatus::find($oldStatusId);
             $newStatus = TicketStatus::find($newStatusId);
 
@@ -79,7 +79,7 @@ class TicketObserver
         if ($ticket->isDirty('priority')) {
             $oldPriority = $ticket->getOriginal('priority');
             $newPriority = $ticket->priority;
-            
+
             if ($oldPriority instanceof TicketPriority) {
                 $oldPriority = $oldPriority->getLabel();
             }
@@ -99,11 +99,11 @@ class TicketObserver
     public function replying(Ticket $ticket, $reply): void
     {
         $activityType = $reply->is_internal_note ? 'Internal note added' : 'Reply sent';
-        
+
         $ticket->activities()->create([
             'user_id' => $reply->user_id,
             'description' => $activityType,
-            'new_value' => substr(strip_tags($reply->content), 0, 100) . '...',
+            'new_value' => substr(strip_tags($reply->content), 0, 100).'...',
         ]);
 
         $ticket->last_activity_at = now();
@@ -139,5 +139,4 @@ class TicketObserver
 
         return $uid;
     }
-
 }

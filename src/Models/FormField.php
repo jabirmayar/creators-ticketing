@@ -29,7 +29,7 @@ class FormField extends Model
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
-        $this->table = config('creators-ticketing.table_prefix') . 'form_fields';
+        $this->table = config('creators-ticketing.table_prefix').'form_fields';
     }
 
     public function form(): BelongsTo
