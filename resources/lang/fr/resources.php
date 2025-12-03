@@ -48,6 +48,7 @@ return [
             'date' => 'Date',
             'datetime' => 'Date & Heure',
             'file' => 'Fichier',
+            'file_multiple' => 'Téléverser plusieurs fichiers',
         ],
     ],
     'department' => [
@@ -286,6 +287,8 @@ return [
         'just_now' => 'À l’instant',
         'form_data_label' => 'Détails du Ticket',
         'new_reply' => 'Nouvelle Réponse',
+        'max_files_error' => 'Vous ne pouvez téléverser que :count fichiers maximum.',
+        'no_file_attached' => 'Aucun fichier joint',
     ],
     'timeline' => [
         'system' => 'Système',

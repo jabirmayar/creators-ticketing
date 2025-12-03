@@ -16,7 +16,8 @@
     },
     "autoload": {
         "psr-4": {
-            "daacreators\\CreatorsTicketing\\": "src/"
+            "daacreators\\CreatorsTicketing\\": "src/",
+            "daacreators\\CreatorsTicketing\\Database\\Seeders\\": "database/seeders/"
         }
     },
     "extra": {

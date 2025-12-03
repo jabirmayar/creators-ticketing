@@ -48,6 +48,7 @@ return [
             'date' => 'Datum',
             'datetime' => 'Datum & Zeit',
             'file' => 'Datei-Upload',
+            'file_multiple' => 'Mehrere Dateien hochladen',
         ],
     ],
     'department' => [
@@ -286,6 +287,8 @@ return [
         'just_now' => 'Gerade eben',
         'form_data_label' => 'Ticketdetails',
         'new_reply' => 'Neue Antwort',
+        'max_files_error' => 'Sie können maximal :count Dateien hochladen.',
+        'no_file_attached' => 'Keine Dateien angehängt',
     ],
     'timeline' => [
         'system' => 'System',

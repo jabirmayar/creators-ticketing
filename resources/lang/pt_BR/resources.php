@@ -48,6 +48,7 @@ return [
             'date' => 'Data',
             'datetime' => 'Data e Hora',
             'file' => 'Upload de Arquivo',
+            'file_multiple' => 'Enviar múltiplos arquivos',
         ],
     ],
     'department' => [
@@ -286,6 +287,8 @@ return [
         'just_now' => 'Agora mesmo',
         'form_data_label' => 'Detalhes do Ticket',
         'new_reply' => 'Nova Resposta',
+        'max_files_error' => 'Você só pode enviar no máximo :count arquivos.',
+        'no_file_attached' => 'Nenhum arquivo anexado',
     ],
     'timeline' => [
         'system' => 'Sistema',

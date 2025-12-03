@@ -48,6 +48,7 @@ return [
             'date' => 'تاريخ',
             'datetime' => 'تاريخ ووقت',
             'file' => 'رفع ملف',
+            'file_multiple' => 'رفع ملفات متعددة',
         ],
     ],
     'department' => [
@@ -286,6 +287,8 @@ return [
         'just_now' => 'الآن',
         'form_data_label' => 'تفاصيل التذكرة',
         'new_reply' => 'رد جديد',
+        'max_files_error' => 'يمكنك رفع :count ملفات كحد أقصى.',
+        'no_file_attached' => 'لا توجد ملفات مرفقة',
     ],
     'timeline' => [
         'system' => 'النظام',

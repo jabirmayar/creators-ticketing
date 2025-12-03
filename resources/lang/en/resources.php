@@ -48,6 +48,7 @@ return [
             'date' => 'Date',
             'datetime' => 'Date & Time',
             'file' => 'File Upload',
+            'file_multiple' => 'Multiple Files Upload',
         ],
     ],
     'department' => [
@@ -286,6 +287,8 @@ return [
         'just_now' => 'Just now',
         'form_data_label' => 'Ticket Details',
         'new_reply' => 'New Reply',
+        'max_files_error' => 'You can only upload :count files maximum.',
+        'no_file_attached' => 'No files attached',
     ],
     'timeline' => [
         'system' => 'System',

@@ -94,6 +94,24 @@ Run the migrations:
 php artisan migrate
 ```
 
+### Seeding Ticket Statuses
+
+After running migrations, you can seed default ticket statuses using the provided seeder:
+
+```bash
+php artisan db:seed --class=daacreators\\CreatorsTicketing\\Database\\Seeders\\TicketStatusSeeder
+```
+
+This will create the following default ticket statuses:
+- **Open** (Blue) - Default status for new tickets
+- **In Progress** (Amber) - Tickets being worked on
+- **Answered** (Green) - Tickets that have been answered
+- **Pending** (Purple) - Tickets waiting for response
+- **Resolved** (Green) - Tickets that have been resolved
+- **Closed** (Gray) - Closing status for completed tickets
+
+The seeder uses `updateOrCreate` to prevent duplicates, so you can safely run it multiple times.
+
 ## Upgrading
 
 ### Upgrading from v1.0.5 to v1.0.6
