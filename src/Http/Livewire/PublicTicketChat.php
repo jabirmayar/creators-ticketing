@@ -8,6 +8,7 @@ use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\RateLimiter;
 use daacreators\CreatorsTicketing\Models\Ticket;
 use daacreators\CreatorsTicketing\Models\TicketReply;
+use daacreators\CreatorsTicketing\Events\TicketReplyAdded;
 
 class PublicTicketChat extends Component
 {
@@ -60,7 +61,7 @@ class PublicTicketChat extends Component
     public function sendMessage()
     {
         $key = 'ticket-message:' . auth()->id();
-    
+
         if (RateLimiter::tooManyAttempts($key, 5)) {
             $seconds = RateLimiter::availableIn($key);
             $this->addError('message', "You are sending messages too fast. Please wait $seconds seconds.");
@@ -75,12 +76,14 @@ class PublicTicketChat extends Component
 
         $cleanMessage = strip_tags($this->message);
 
-        TicketReply::create([
+        $reply = TicketReply::create([
             'ticket_id' => $this->ticket->id,
             'user_id' => auth()->id(),
             'content' => $this->message,
             'is_internal_note' => false,
         ]);
+
+        event(new TicketReplyAdded($this->ticket, $reply));
         
         $this->message = '';
         

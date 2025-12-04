@@ -31,6 +31,9 @@ use daacreators\CreatorsTicketing\Models\Department;
 use daacreators\CreatorsTicketing\Models\TicketStatus;
 use daacreators\CreatorsTicketing\Enums\TicketPriority;
 use Filament\Schemas\Components\Actions as SchemaActions;
+use daacreators\CreatorsTicketing\Events\TicketReplyAdded;
+use daacreators\CreatorsTicketing\Events\InternalNoteAdded;
+use daacreators\CreatorsTicketing\Events\TicketTransferred;
 use daacreators\CreatorsTicketing\Support\TicketFileHelper;
 use daacreators\CreatorsTicketing\Traits\HasTicketPermissions;
 use daacreators\CreatorsTicketing\Http\Livewire\TicketTimeline;
@@ -125,18 +128,18 @@ class ViewTicket extends ViewRecord
         $recordDepartmentId = $this->record->department_id;
 
         $canReplyToTickets = $permissions['is_admin'] || 
-                             ($this->record->user_id === $user->id && config('creators-ticketing.allow_requester_to_reply', true)) ||
-                             (isset($permissions['permissions'][$recordDepartmentId]) && $permissions['permissions'][$recordDepartmentId]['can_reply_to_tickets']);
+                            ($this->record->user_id === $user->id && config('creators-ticketing.allow_requester_to_reply', true)) ||
+                            (isset($permissions['permissions'][$recordDepartmentId]) && $permissions['permissions'][$recordDepartmentId]['can_reply_to_tickets']);
         
         $canAddInternalNotes = $permissions['is_admin'] || 
-                               (isset($permissions['permissions'][$recordDepartmentId]) && $permissions['permissions'][$recordDepartmentId]['can_add_internal_notes']);
+                            (isset($permissions['permissions'][$recordDepartmentId]) && $permissions['permissions'][$recordDepartmentId]['can_add_internal_notes']);
 
         if (!$canReplyToTickets) {
             Notification::make()->title(__('creators-ticketing::resources.ticket.notifications.unauthorized'))->danger()->body(__('creators-ticketing::resources.ticket.notifications.unauthorized_body_reply'))->send();
             return;
         }
         if (($this->replyData['is_internal_note'] ?? false) && !$canAddInternalNotes) {
-             Notification::make()->title(__('creators-ticketing::resources.ticket.notifications.unauthorized'))->danger()->body(__('creators-ticketing::resources.ticket.notifications.unauthorized_body_internal'))->send();
+            Notification::make()->title(__('creators-ticketing::resources.ticket.notifications.unauthorized'))->danger()->body(__('creators-ticketing::resources.ticket.notifications.unauthorized_body_internal'))->send();
             return;
         }
 
@@ -154,7 +157,7 @@ class ViewTicket extends ViewRecord
         $htmlContent = is_array($content) ? $this->convertTiptapToHtml($content) : $content;
         $htmlContent = $this->moveTempFilesToPermanentStorage($htmlContent);
 
-        $this->record->replies()->create([
+        $reply = $this->record->replies()->create([
             'content' => str($htmlContent)->sanitizeHtml(),
             'user_id' => Filament::auth()->id(),
             'is_internal_note' => $data['is_internal_note'] ?? false,
@@ -167,6 +170,12 @@ class ViewTicket extends ViewRecord
         ]);
 
         $this->record->touch('last_activity_at');
+
+        if ($data['is_internal_note'] ?? false) {
+            event(new InternalNoteAdded($this->record, $reply));
+        } else {
+            event(new TicketReplyAdded($this->record, $reply));
+        }
 
         $this->replyData = [
             'content' => '',
@@ -302,6 +311,13 @@ class ViewTicket extends ViewRecord
             'old_value' => $oldDepartment->name,
             'new_value' => $activityNewValue,
         ]);
+
+        event(new TicketTransferred(
+            $this->record,
+            $oldDepartment,
+            $newDepartment,
+            Filament::auth()->user()
+        ));
 
         Notification::make()
             ->title(__('creators-ticketing::resources.ticket.notifications.transferred'))

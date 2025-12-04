@@ -2,14 +2,15 @@
 
 namespace daacreators\CreatorsTicketing\Http\Livewire;
 
-use daacreators\CreatorsTicketing\Models\Form;
-use daacreators\CreatorsTicketing\Models\Department;
-use daacreators\CreatorsTicketing\Models\Ticket;
-use daacreators\CreatorsTicketing\Models\TicketStatus;
-use daacreators\CreatorsTicketing\Support\TicketFileHelper;
 use Livewire\Component;
 use Livewire\Attributes\Url;
 use Livewire\WithFileUploads;
+use daacreators\CreatorsTicketing\Models\Form;
+use daacreators\CreatorsTicketing\Models\Ticket;
+use daacreators\CreatorsTicketing\Models\Department;
+use daacreators\CreatorsTicketing\Models\TicketStatus;
+use daacreators\CreatorsTicketing\Events\TicketCreated;
+use daacreators\CreatorsTicketing\Support\TicketFileHelper;
 
 class TicketSubmitForm extends Component
 {
@@ -312,6 +313,8 @@ class TicketSubmitForm extends Component
         if ($hasFilesToUpload) {
             $ticket->update(['custom_fields' => $finalCustomFields]);
         }
+
+        event(new TicketCreated($ticket, auth()->user()));
 
         session()->flash('success', 'Ticket submitted successfully!');
 

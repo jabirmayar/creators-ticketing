@@ -4,6 +4,7 @@ namespace daacreators\CreatorsTicketing;
 
 use Livewire\Livewire;
 use Filament\Support\Assets\Css;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider;
 use Filament\Support\Facades\FilamentAsset;
@@ -34,7 +35,7 @@ class TicketingServiceProvider extends ServiceProvider
         ], 'creators-ticketing-translations');
 
         $this->publishes([
-           __DIR__.'/../config/creators-ticketing.php' => config_path('creators-ticketing.php'),
+            __DIR__.'/../config/creators-ticketing.php' => config_path('creators-ticketing.php'),
         ], 'creators-ticketing-config');
 
         $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
@@ -48,6 +49,13 @@ class TicketingServiceProvider extends ServiceProvider
         $this->registerPrivateDisk();
 
         $this->ensureStorageDirectoryExists();
+        
+        $this->registerEvents();
+    }
+
+    protected function registerEvents(): void
+    {
+        
     }
 
     protected function registerPrivateDisk(): void
