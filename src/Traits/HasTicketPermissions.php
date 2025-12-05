@@ -26,7 +26,7 @@ trait HasTicketPermissions
         $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
         $userInstance = new $userModel;
         $userKey = $userInstance->getKeyName();
-        $pivotUserColumn = "user_{$userKey}";
+        $pivotUserColumn = 'user_id';
 
         $departments = DB::table(config('creators-ticketing.table_prefix') . 'department_users')
             ->where($pivotUserColumn, $user->{$userKey})
@@ -65,7 +65,7 @@ trait HasTicketPermissions
         }
 
         foreach ($perms['permissions'] as $permission) {
-            if ($permission['can_view_all_tickets']) {
+            if ($permission['can_view_all_tickets'] ?? false) {
                 return true;
             }
         }

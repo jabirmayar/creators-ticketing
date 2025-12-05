@@ -112,20 +112,26 @@ class AgentsRelationManager extends RelationManager
                                 ->searchable()
                                 ->multiple()
                                 ->getSearchResultsUsing(function (string $search) use ($userModel) {
+                                    $userInstance = new $userModel; 
+                                    $userKey = $userInstance->getKeyName();
+                                    
                                     return $userModel::query()
                                         ->where('name', 'like', "%{$search}%")
                                         ->orWhere('email', 'like', "%{$search}%")
                                         ->limit(50)
                                         ->get()
                                         ->mapWithKeys(fn ($user) => [
-                                            $user->id => "{$user->name} - {$user->email}"
+                                            $user->{$userKey} => "{$user->name} - {$user->email}"
                                         ]);
                                 })
                                 ->getOptionLabelsUsing(function (array $values) use ($userModel) {
-                                    return $userModel::whereIn('id', $values)
+                                    $userInstance = new $userModel;  
+                                    $userKey = $userInstance->getKeyName(); 
+                                    
+                                    return $userModel::whereIn($userKey, $values) 
                                         ->get()
                                         ->mapWithKeys(fn ($user) => [
-                                            $user->id => "{$user->name} - {$user->email}"
+                                            $user->{$userKey} => "{$user->name} - {$user->email}"
                                         ])
                                         ->toArray();
                                 })
@@ -214,8 +220,14 @@ class AgentsRelationManager extends RelationManager
                                 ->columns(2),
                         ])
                         ->action(function (array $data) {
-                            $existingAgents = $this->getOwnerRecord()->agents()->get();
-                            $existingAgentIds = $existingAgents->pluck('id')->toArray();
+                            $department = $this->getOwnerRecord();
+                            $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
+                            $userInstance = new $userModel;
+                            $userKey = $userInstance->getKeyName();
+
+                            $existingAgentIds = $department->agents()
+                                ->pluck($userKey)
+                                ->toArray();
 
                             $newAgentIds = array_diff($data['user_id'], $existingAgentIds);
 

@@ -20,26 +20,34 @@ class Department extends Model
         'is_active' => 'boolean',
     ];
 
-    public function agents(): BelongsToMany
+   public function agents(): BelongsToMany
     {
         $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
+        $pivot = config('creators-ticketing.table_prefix') . 'department_users';
+        
+        $userInstance = new $userModel;
+        $userPrimaryKey = $userInstance->getKeyName();
 
-		$pivot = config('creators-ticketing.table_prefix') . 'department_users';
-
-		return $this->belongsToMany($userModel, $pivot)
-						->withPivot([
-							'role',
-							'can_create_tickets',
-							'can_view_all_tickets',
-							'can_assign_tickets',
-							'can_change_departments',
-							'can_change_status',
-							'can_change_priority',
-							'can_delete_tickets',
-							'can_reply_to_tickets',
-							'can_add_internal_notes',
-							'can_view_internal_notes',
-						]);
+        return $this->belongsToMany(
+            $userModel, 
+            $pivot, 
+            'department_id',              
+            'user_id',    
+            'id',                         
+            $userPrimaryKey                
+        )->withPivot([
+            'role',
+            'can_create_tickets',
+            'can_view_all_tickets',
+            'can_assign_tickets',
+            'can_change_departments',
+            'can_change_status',
+            'can_change_priority',
+            'can_delete_tickets',
+            'can_reply_to_tickets',
+            'can_add_internal_notes',
+            'can_view_internal_notes',
+        ]);
     }
 
     public function forms(): BelongsToMany

@@ -16,13 +16,14 @@ return new class extends Migration {
                 ->constrained(config('creators-ticketing.table_prefix') . 'departments')
                 ->cascadeOnDelete();
 
-            $table->unsignedBigInteger("user_{$userKey}");
-            $table->foreign("user_{$userKey}")
+            $table->unsignedBigInteger('user_id');
+
+            $table->foreign('user_id')
                 ->references($userKey)
                 ->on($userTable)
                 ->cascadeOnDelete();
 
-            $table->primary(['department_id', "user_{$userKey}"]);
+            $table->primary(['department_id', 'user_id']);
 
             $table->string('role')->default('agent');
             $table->boolean('can_create_tickets')->default(false);

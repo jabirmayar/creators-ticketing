@@ -119,7 +119,7 @@ class TicketResource extends Resource
             return false;
         }
 
-        if ($record->user_id === $user->id) {
+        if ($record->user_id === $user->getKey()) {
             return true;
         }
 
@@ -155,7 +155,7 @@ class TicketResource extends Resource
     public static function form(Schema $schema): Schema
     {
         $permissions = (new static)->getUserPermissions();
-        $user = Filament::auth()->user();
+        $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
 
         return $schema->schema([
             Group::make()->schema([
@@ -224,7 +224,7 @@ class TicketResource extends Resource
                             }),
                         
                         Group::make()
-                            ->schema(fn (Get $get, ?Model $record): array => static::getDynamicFormFields($record, $get('department_id'), $get('form_id'), $permissions, $user))
+                            ->schema(fn (Get $get, ?Model $record): array => static::getDynamicFormFields($record, $get('department_id'), $get('form_id'), $permissions))
                             ->visible(fn (?Model $record, Get $get) => 
                                 $record !== null || $get('department_id') !== null
                             )
@@ -240,7 +240,7 @@ class TicketResource extends Resource
                             ->relationship('requester', 'name')
                             ->searchable()
                             ->required()
-                            ->default(auth()->id())
+                            ->default(Filament::auth()->user()?->getKey())
                             ->visible(fn (?Model $record) => 
                                 $permissions['is_admin'] || 
                                 ($record === null && !empty(collect($permissions['permissions'])->filter(fn($p) => $p['can_assign_tickets'] ?? false))) ||
@@ -252,15 +252,16 @@ class TicketResource extends Resource
                             ->label(__('creators-ticketing::resources.ticket.assignee'))
                             ->searchable()
                             ->getSearchResultsUsing(fn (string $search) => 
-                                User::where('name', 'like', "%{$search}%")
+                                $userModel::where('name', 'like', "%{$search}%")
                                     ->orWhere('email', 'like', "%{$search}%")
                                     ->limit(50)
                                     ->get()
-                                    ->mapWithKeys(fn($user) => [$user->id => $user->name . ' - ' . $user->email])
+                                    ->mapWithKeys(fn($user) => [$user->getKey() => $user->name . ' - ' . $user->email])
                             )
-                            ->getOptionLabelUsing(fn ($value): ?string => 
-                                User::find($value)?->name . ' - ' . User::find($value)?->email
-                            )
+                           ->getOptionLabelUsing(function ($value) use ($userModel): ?string {
+                                $user = $userModel::find($value);
+                                return $user ? "{$user->name} - {$user->email}" : null;
+                            })
                             ->preload(false)
                             ->native(false)
                             ->visible(fn (?Model $record, Get $get) => 
@@ -314,8 +315,10 @@ class TicketResource extends Resource
             ])->columns(3);
     }
 
-    protected static function getDynamicFormFields(?Model $record, $departmentId, $formId, $permissions, $user): array
+    protected static function getDynamicFormFields(?Model $record, $departmentId, $formId, $permissions): array
     {
+        $user = Filament::auth()->user();
+        
         if (!$departmentId) {
             $departmentId = $record?->department_id;
         }
@@ -367,7 +370,7 @@ class TicketResource extends Resource
 
         $fields = [];
         $isDisabled = $record instanceof Ticket && !$permissions['is_admin'] && 
-                      $record->user_id !== $user->id && 
+                      $record->user_id !== $user->getKey() && 
                       !in_array($record->department_id, $permissions['departments']);
 
         foreach ($form->fields as $field) {
@@ -442,7 +445,7 @@ class TicketResource extends Resource
                         ->visibility('private') 
                         ->preserveFilenames()
                         ->directory(fn ($record) => $record 
-                            ? "ticket-attachments/{$record->id}" 
+                            ? "ticket-attachments/{$record->getKey()}" 
                             : "ticket-attachments/temp" 
                         );
 
@@ -561,7 +564,7 @@ class TicketResource extends Resource
                                         $schema[] = Livewire::make(TicketAttachmentsDisplay::class)
                                             ->label($field->label)
                                             ->componentProperties([
-                                                'ticketId' => $record->id,
+                                                'ticketId' => $record->getKey(),
                                                 'files' => $value,
                                                 'label' => $field->label,
                                             ]);
@@ -618,22 +621,31 @@ class TicketResource extends Resource
                 }
 
                 if (!empty($permissions['departments'])) {
-                    $canViewAllInDepartments = (new static)->canUserViewAllTickets();
+                    $canViewAllInDepartments = collect($permissions['permissions'])
+                        ->filter(fn($perm) => $perm['can_view_all_tickets'] ?? false)
+                        ->isNotEmpty();
+                    
+                    $departmentsWithViewAll = collect($permissions['permissions'])
+                        ->filter(fn($perm) => $perm['can_view_all_tickets'] ?? false)
+                        ->keys()
+                        ->toArray();
+                    
                     $departmentIds = $permissions['departments'];
                     
-                    $query->where(function (Builder $q) use ($user, $departmentIds, $canViewAllInDepartments) {
-                        if ($canViewAllInDepartments) {
-                            $q->orWhereIn('department_id', $departmentIds);
-                        } else {
-                            $q->orWhere(function (Builder $subQ) use ($user, $departmentIds) {
-                                $subQ->whereIn('department_id', $departmentIds)
-                                     ->where('assignee_id', $user->id);
-                            });
+                    $query->where(function (Builder $q) use ($user, $departmentIds, $departmentsWithViewAll) {
+                        if (!empty($departmentsWithViewAll)) {
+                            $q->orWhereIn('department_id', $departmentsWithViewAll);
                         }
-                        $q->orWhere('user_id', $user->id);
+                        
+                        $q->orWhere(function (Builder $subQ) use ($user, $departmentIds) {
+                            $subQ->whereIn('department_id', $departmentIds)
+                                ->where('assignee_id', $user->getKey());
+                        });
+                        
+                        $q->orWhere('user_id', $user->getKey());
                     });
                 } else {
-                    $query->where('user_id', $user->id);
+                    $query->where('user_id', $user->getKey());
                 }
             })
            ->recordClasses(fn (Model $record) => match (true) {
@@ -772,21 +784,22 @@ class TicketResource extends Resource
                                         ->where(fn ($query) => $query->where('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%"))
                                         ->limit(50)
                                         ->get()
-                                        ->mapWithKeys(fn($user) => [$user->id => $user->name . ' - ' . $user->email]);
+                                        ->mapWithKeys(fn($user) => [$user->getKey() => $user->name . ' - ' . $user->email]);
                                     })
-                                    ->getOptionLabelUsing(fn ($value): ?string => 
-                                        $userModel::find($value)?->name . ' - ' . $userModel::find($value)?->email
-                                    )
+                                    ->getOptionLabelUsing(function ($value) use ($userModel): ?string {
+                                        $user = $userModel::find($value);
+                                        return $user ? "{$user->name} - {$user->email}" : null;
+                                    })
                                     ->options(function (Component $component) use ($userModel): array {
                                         if (config('creators-ticketing.ticket_assign_scope') === 'department_only') {
                                             $departmentId = $component->getContainer()->getRecord()?->department_id;
                                             if ($departmentId) {
-                                                return Department::find($departmentId)?->agents->mapWithKeys(fn($user) => [$user->id => $user->name . ' - ' . $user->email])->toArray() ?? [];
+                                                return Department::find($departmentId)?->agents->mapWithKeys(fn($user) => [$user->getKey() => $user->name . ' - ' . $user->email])->toArray() ?? [];
                                             }
                                         }
                                         return $userModel::limit(50)
                                             ->get()
-                                            ->mapWithKeys(fn($user) => [$user->id => $user->name . ' - ' . $user->email])
+                                            ->mapWithKeys(fn($user) => [$user->getKey() => $user->name . ' - ' . $user->email])
                                             ->toArray();
                                     })
                                     ->default(fn (Model $record) => $record instanceof Ticket ? $record->assignee_id : null)
@@ -801,11 +814,12 @@ class TicketResource extends Resource
                                     ->orWhere('email', 'like', "%{$search}%")
                                     ->limit(50)
                                     ->get()
-                                    ->mapWithKeys(fn($user) => [$user->id => $user->name . ' - ' . $user->email]);
+                                    ->mapWithKeys(fn($user) => [$user->getKey() => $user->name . ' - ' . $user->email]);
                                 })
-                            ->getOptionLabelUsing(fn ($value): ?string => 
-                                $userModel::find($value)?->name . ' - ' . $userModel::find($value)?->email
-                            )
+                            ->getOptionLabelUsing(function ($value) use ($userModel): ?string {
+                                $user = $userModel::find($value);
+                                return $user ? "{$user->name} - {$user->email}" : null;
+                            })
                             ->default(fn (Model $record) => $record instanceof Ticket ? $record->assignee_id : null)
                             ->preload(false)
                             ->native(false),
@@ -815,7 +829,7 @@ class TicketResource extends Resource
                         $record->update(['assignee_id' => $data['assignee_id']]);
 
                         $record->activities()->create([
-                            'user_id' => auth()->id(),
+                            'user_id' => Filament::auth()->user()->getKey(),
                             'description' => 'Ticket assigned',
                             'new_value' => $userModel::find($data['assignee_id'])?->name,
                         ]);

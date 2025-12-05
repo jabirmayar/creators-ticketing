@@ -54,7 +54,7 @@ class ViewTicket extends ViewRecord
     public function mount(int | string $record): void
     {
         parent::mount($record);
-        $this->record->markSeenBy(\Filament\Facades\Filament::auth()->id());
+        $this->record->markSeenBy(Filament::auth()->user()?->getKey());
         $this->replyData = [
             'content' => '',
             'is_internal_note' => false,
@@ -114,7 +114,7 @@ class ViewTicket extends ViewRecord
 
         $this->record->update(['assignee_id' => $assigneeId]);
 
-        $this->record->markSeenBy(Filament::auth()->id());
+        $this->record->markSeenBy(Filament::auth()->user()?->getKey());
         
         Notification::make()->title(__('creators-ticketing::resources.ticket.notifications.assigned'))->success()->send();
         
@@ -128,7 +128,7 @@ class ViewTicket extends ViewRecord
         $recordDepartmentId = $this->record->department_id;
 
         $canReplyToTickets = $permissions['is_admin'] || 
-                            ($this->record->user_id === $user->id && config('creators-ticketing.allow_requester_to_reply', true)) ||
+                            ($this->record->user_id === $user->getKey() && config('creators-ticketing.allow_requester_to_reply', true)) ||
                             (isset($permissions['permissions'][$recordDepartmentId]) && $permissions['permissions'][$recordDepartmentId]['can_reply_to_tickets']);
         
         $canAddInternalNotes = $permissions['is_admin'] || 
@@ -159,12 +159,12 @@ class ViewTicket extends ViewRecord
 
         $reply = $this->record->replies()->create([
             'content' => str($htmlContent)->sanitizeHtml(),
-            'user_id' => Filament::auth()->id(),
+            'user_id' => Filament::auth()->user()?->getKey(),
             'is_internal_note' => $data['is_internal_note'] ?? false,
         ]);
 
         $this->record->activities()->create([
-            'user_id' => Filament::auth()->id(),
+            'user_id' => Filament::auth()->user()?->getKey(),
             'description' => $data['is_internal_note'] ?? false ? 'Internal note added' : 'Reply sent',
             'new_value' => substr(strip_tags($htmlContent), 0, 100) . '...',
         ]);
@@ -275,12 +275,17 @@ class ViewTicket extends ViewRecord
 
         $updateData = ['department_id' => $newDepartmentId];
         
+        $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
+        $userInstance = new $userModel;
+        $userKey = $userInstance->getKeyName();
+        $pivotUserColumn = "user_{$userKey}";
+        
         if ($newAssigneeId) {
             $updateData['assignee_id'] = $newAssigneeId;
         } elseif ($keepCurrentAssignee && $currentAssigneeId) {
             $isAssigneeInNewDept = DB::table(config('creators-ticketing.table_prefix') . 'department_users')
                 ->where('department_id', $newDepartmentId)
-                ->where('user_id', $currentAssigneeId)
+                ->where($pivotUserColumn, $currentAssigneeId)
                 ->exists();
             
             if ($isAssigneeInNewDept) {
@@ -298,7 +303,7 @@ class ViewTicket extends ViewRecord
         $activityNewValue = $newDepartment->name;
         
         if (isset($updateData['assignee_id']) && $updateData['assignee_id']) {
-            $newAssignee = User::find($updateData['assignee_id']);
+            $newAssignee = $userModel::find($updateData['assignee_id']);
             $activityDescription .= ' and assigned to ' . $newAssignee->name;
             $activityNewValue .= ' (Assigned: ' . $newAssignee->name . ')';
         } elseif ($currentAssigneeId && !isset($updateData['assignee_id'])) {
@@ -306,7 +311,7 @@ class ViewTicket extends ViewRecord
         }
 
         $this->record->activities()->create([
-            'user_id' => Filament::auth()->id(),
+            'user_id' => Filament::auth()->user()?->getKey(),
             'description' => 'Ticket transferred',
             'old_value' => $oldDepartment->name,
             'new_value' => $activityNewValue,
@@ -536,7 +541,7 @@ class ViewTicket extends ViewRecord
         $recordDepartmentId = $this->record->department_id;
 
         $canReplyToTickets = $permissions['is_admin'] || 
-                             ($this->record->user_id === $user->id && config('creators-ticketing.allow_requester_to_reply', true)) ||
+                             ($this->record->user_id === $user->getKey() && config('creators-ticketing.allow_requester_to_reply', true)) ||
                              (isset($permissions['permissions'][$recordDepartmentId]) && $permissions['permissions'][$recordDepartmentId]['can_reply_to_tickets']);
         
         $canAddInternalNotes = $permissions['is_admin'] || 
@@ -827,7 +832,7 @@ class ViewTicket extends ViewRecord
                                         ->where(fn ($query) => $query->where('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%"))
                                         ->limit(50)
                                         ->get()
-                                        ->mapWithKeys(fn($user) => [$user->id => $user->name . ' - ' . $user->email]);
+                                        ->mapWithKeys(fn($user) => [$user->getKey() => $user->name . ' - ' . $user->email]);
                                     })
                                     ->getOptionLabelUsing(function ($value) {
                                         $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
@@ -838,12 +843,12 @@ class ViewTicket extends ViewRecord
                                         if (config('creators-ticketing.ticket_assign_scope') === 'department_only') {
                                             $departmentId = $this->record->department_id;
                                             if ($departmentId) {
-                                                return Department::find($departmentId)?->agents->mapWithKeys(fn($user) => [$user->id => $user->name . ' - ' . $user->email])->toArray() ?? [];
+                                                return Department::find($departmentId)?->agents->mapWithKeys(fn($user) => [$user->getKey() => $user->name . ' - ' . $user->email])->toArray() ?? [];
                                             }
                                         }
                                         return $userModel::limit(50)
                                             ->get()
-                                            ->mapWithKeys(fn($user) => [$user->id => $user->name . ' - ' . $user->email])
+                                            ->mapWithKeys(fn($user) => [$user->getKey() => $user->name . ' - ' . $user->email])
                                             ->toArray();
                                     })
                                     ->default($this->record->assignee_id)
@@ -860,7 +865,7 @@ class ViewTicket extends ViewRecord
                                             ->orWhere('email', 'like', "%{$search}%")
                                             ->limit(50)
                                             ->get()
-                                            ->mapWithKeys(fn($user) => [$user->id => $user->name . ' - ' . $user->email]);
+                                            ->mapWithKeys(fn($user) => [$user->getKey() => $user->name . ' - ' . $user->email]);
                                     })
                                     ->getOptionLabelUsing(function ($value) {
                                         $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
@@ -926,7 +931,7 @@ class ViewTicket extends ViewRecord
                             )
                             ->limit(50)
                             ->get()
-                            ->mapWithKeys(fn($user) => [$user->id => $user->name . ' - ' . $user->email]);
+                            ->mapWithKeys(fn($user) => [$user->getKey() => $user->name . ' - ' . $user->email]);
                         })
                         ->getOptionLabelUsing(fn ($value): ?string => 
                             $userModel::find($value)?->name . ' - ' . $userModel::find($value)?->email
@@ -940,7 +945,7 @@ class ViewTicket extends ViewRecord
                             
                             $department = Department::find($departmentId);
                             return $department?->agents
-                                ->mapWithKeys(fn($user) => [$user->id => $user->name . ' - ' . $user->email])
+                                ->mapWithKeys(fn($user) => [$user->getKey() => $user->name . ' - ' . $user->email])
                                 ->toArray() ?? [];
                         })
                         ->default(function (Get $get) {
@@ -951,9 +956,14 @@ class ViewTicket extends ViewRecord
                                 return null;
                             }
                             
+                            $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
+                            $userInstance = new $userModel;
+                            $userKey = $userInstance->getKeyName();
+                            $pivotUserColumn = "user_{$userKey}";
+                            
                             $isInNewDept = DB::table(config('creators-ticketing.table_prefix') . 'department_users')
                                 ->where('department_id', $departmentId)
-                                ->where('user_id', $currentAssigneeId)
+                                ->where($pivotUserColumn, $currentAssigneeId)
                                 ->exists();
                             
                             return $isInNewDept ? $currentAssigneeId : null;
