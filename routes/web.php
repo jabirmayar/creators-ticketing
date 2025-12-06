@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Filament\Facades\Filament;
 use daacreators\CreatorsTicketing\Models\Ticket;
 
@@ -16,10 +17,16 @@ Route::middleware(['web'])->group(function () {
         }
 
         if (!$user) {
+            Log::warning('Unauthorized attachment access - no user', ['ticketId' => $ticketId]);
             return redirect('/admin/login');
         }
 
-        $ticket = Ticket::findOrFail($ticketId);
+        try {
+            $ticket = Ticket::findOrFail($ticketId);
+        } catch (\Exception $e) {
+            Log::error('Ticket not found', ['ticketId' => $ticketId]);
+            abort(404, 'Ticket not found');
+        }
 
         $hasAccess = false;
 
@@ -54,17 +61,29 @@ Route::middleware(['web'])->group(function () {
         }
 
         if (!$hasAccess) {
+            Log::warning('Unauthorized attachment access', [
+                'ticketId' => $ticketId,
+                'userId' => $user->getKey()
+            ]);
             abort(403, 'Unauthorized');
         }
 
         $path = "ticket-attachments/{$ticketId}/{$filename}";
 
         if (!Storage::disk('private')->exists($path)) {
+            Log::error('File not found in storage', [
+                'path' => $path,
+                'disk' => 'private'
+            ]);
             abort(404, 'File not found');
         }
 
-        return response()->file(
-            Storage::disk('private')->path($path)
-        );
+        $filePath = Storage::disk('private')->path($path);
+        $mimeType = Storage::disk('private')->mimeType($path);
+
+        return response()->file($filePath, [
+            'Content-Type' => $mimeType,
+            'Cache-Control' => 'private, max-age=3600',
+        ]);
     })->name('creators-ticketing.attachment');
 });

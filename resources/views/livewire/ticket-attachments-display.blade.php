@@ -1,5 +1,29 @@
 @php
     $wrapperId = 'attachments-' . uniqid();
+    $hasFiles = false;
+    $processedFiles = [];
+    
+    foreach ($files as $index => $file) {
+        if (!is_string($file)) continue;
+        
+        $hasFiles = true;
+        $filename = basename($file);
+        $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+        $isImage = in_array($ext, ['jpg','jpeg','png','gif','webp','bmp','svg']);
+        
+        if (\Illuminate\Support\Facades\Route::has('creators-ticketing.attachment')) {
+            $url = route('creators-ticketing.attachment', ['ticketId' => $ticketId, 'filename' => $filename]);
+        } else {
+            $url = url('/private/ticket-attachments/' . $ticketId . '/' . $filename);
+        }
+        
+        $processedFiles[] = [
+            'filename' => $filename,
+            'url' => $url,
+            'isImage' => $isImage,
+            'ext' => $ext,
+        ];
+    }
 @endphp
 
 <div
@@ -52,41 +76,33 @@
         .attachment-thumb-container { width: 5.5rem; height: 5.5rem; min-width: 5.5rem; min-height: 5.5rem; cursor: pointer !important; }
     </style>
 
-    @php
-        $hasFiles = false;
-        use Illuminate\Support\Facades\URL;
-        use Illuminate\Support\Facades\Route;
-    @endphp
-
     @if($label)
-        <h3>{{ $this->label }}</h3><br>
+        <h3>{{ $label }}</h3><br>
     @endif
 
     <div class="flex flex-wrap gap-3 items-start">
-        @foreach($files as $index => $file)
+        @foreach($processedFiles as $file)
             @php
-                if (!is_string($file)) continue;
-                $hasFiles = true;
-                $filename = basename($file);
-                $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-                $url = Route::has('creators-ticketing.attachment')
-                    ? route('creators-ticketing.attachment', ['ticketId' => $ticketId, 'filename' => $filename])
-                    : URL::to('/private/ticket-attachments/' . $ticketId . '/' . $filename);
-                $isImage = in_array($ext, ['jpg','jpeg','png','gif','webp','bmp','svg']);
-                $safeUrl = e($url);
-                $safeName = e($filename);
+                $safeUrl = e($file['url']);
+                $safeName = e($file['filename']);
             @endphp
 
-            @if($isImage)
-                <div class="attachment-thumb-container rounded-lg overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center cursor-pointer transition-shadow hover:shadow-lg" @click="openGallery('{{ $safeUrl }}')">
+            @if($file['isImage'])
+                <div class="attachment-thumb-container rounded-lg overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center cursor-pointer transition-shadow hover:shadow-lg" 
+                     @click="openGallery('{{ $safeUrl }}')">
                     <div data-lightbox-src="{{ $safeUrl }}" data-lightbox-alt="{{ $safeName }}" class="hidden"></div>
-                    <img src="{{ $safeUrl }}" alt="{{ $safeName }}" class="attachment-thumb-img" loading="lazy">
+                    <img src="{{ $safeUrl }}" 
+                         alt="{{ $safeName }}" 
+                         class="attachment-thumb-img" 
+                         loading="lazy"
+                         onerror="this.parentElement.innerHTML='<div class=\'flex flex-col items-center justify-center p-2\'><svg class=\'w-8 h-8 text-gray-400\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z\'></path></svg><p class=\'text-xs text-red-500 mt-1 text-center\'>Failed to load</p></div>';">
                 </div>
             @else
-                <a href="{{ $safeUrl }}" target="_blank" download
-                    class="rounded-lg border border-gray-200 bg-gray-50 flex flex-col items-center justify-center gap-1 p-3 text-xs text-gray-700 hover:bg-gray-100 transition-colors w-full min-w-0"
-                    title="{{ $safeName }}"
-                >
+                <a href="{{ $safeUrl }}" 
+                   target="_blank" 
+                   download
+                   class="rounded-lg border border-gray-200 bg-gray-50 flex flex-col items-center justify-center gap-1 p-3 text-xs text-gray-700 hover:bg-gray-100 transition-colors w-full min-w-0"
+                   title="{{ $safeName }}">
                     <svg class="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round"
                             d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
@@ -101,7 +117,7 @@
     </div>
 
     @if(!$hasFiles)
-            <div class="text-sm italic text-gray-400 mt-2">{{ __('creators-ticketing::resources.frontend.no_file_attached') }}</div>
+        <div class="text-sm italic text-gray-400 mt-2">{{ __('creators-ticketing::resources.frontend.no_file_attached') }}</div>
     @endif
 
     <template x-teleport="body">
