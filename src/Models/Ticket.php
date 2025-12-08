@@ -3,9 +3,10 @@
 namespace daacreators\CreatorsTicketing\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use daacreators\CreatorsTicketing\Enums\TicketPriority;
 
 class Ticket extends Model
@@ -28,6 +29,10 @@ class Ticket extends Model
             if (empty($ticket->last_activity_at)) {
                 $ticket->last_activity_at = now();
             }
+        });
+
+        static::deleted(function (Ticket $ticket) {
+            Storage::disk('private')->deleteDirectory('ticket-attachments/' . $ticket->id);
         });
     }
 
