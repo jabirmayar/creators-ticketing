@@ -13,10 +13,12 @@ class TicketChatMessages extends Component implements HasForms
 
     public $ticket;
     public $replies;
+    public bool $canViewInternalNotes = false;
 
-    public function mount($ticket)
+    public function mount($ticket, $canViewInternalNotes = false)
     {
         $this->ticket = $ticket;
+        $this->canViewInternalNotes = $canViewInternalNotes;
         $this->loadReplies();
     }
 

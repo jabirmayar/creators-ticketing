@@ -173,6 +173,7 @@ class ViewTicket extends ViewRecord
 
         if ($data['is_internal_note'] ?? false) {
             event(new InternalNoteAdded($this->record, $reply));
+            $this->dispatch('internal-note-created'); 
         } else {
             event(new TicketReplyAdded($this->record, $reply));
         }

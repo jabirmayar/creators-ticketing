@@ -10,10 +10,16 @@ use Filament\Tables\Columns\Layout\Stack;
 use Filament\Tables\Columns\Layout\Split;
 use Filament\Resources\RelationManagers\RelationManager;
 use Illuminate\Database\Eloquent\Model;
+use Livewire\Attributes\On;
 
 class InternalNotesRelationManager extends RelationManager
 {
     protected static string $relationship = 'internalNotes';
+    
+    #[On('internal-note-created')]
+    public function refresh(): void
+    {
+    }
     
     public static function getTitle(Model $ownerRecord, string $pageClass): string
     {
