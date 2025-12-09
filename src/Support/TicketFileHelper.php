@@ -4,90 +4,65 @@ namespace daacreators\CreatorsTicketing\Support;
 
 use Illuminate\Support\Facades\Storage;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
-use Illuminate\Support\Facades\Log;
 
 class TicketFileHelper
 {
     public static function processUploadedFiles(mixed $files, string $ticketId): array
     {
-        if (self::isEmptyFileInput($files)) {
+        if (self::hasNoFiles($files)) {
             return [];
         }
 
-        $filesToProcess = self::convertToArray($files);
-        self::createAttachmentDirectory($ticketId);
+        $filesArray = self::normalizeFilesToArray($files);
+        self::ensureStorageDirectoryExists($ticketId);
         
-        return self::processFileCollection($filesToProcess, $ticketId);
+        return self::storeAllFiles($filesArray, $ticketId);
     }
 
-    private static function isEmptyFileInput(mixed $files): bool
+    private static function hasNoFiles(mixed $files): bool
     {
-        if (is_array($files)) {
-            return count(array_filter($files)) === 0;
-        }
-        
         return empty($files);
     }
 
-    private static function convertToArray(mixed $files): array
+    private static function normalizeFilesToArray(mixed $files): array
     {
-        if (is_array($files)) {
-            return array_filter($files);
-        }
-        
-        return $files ? [$files] : [];
+        return is_array($files) ? $files : [$files];
     }
 
-    private static function createAttachmentDirectory(string $ticketId): void
+    private static function ensureStorageDirectoryExists(string $ticketId): void
     {
-        $directoryPath = Storage::disk('private')->path("ticket-attachments/{$ticketId}");
+        $directoryPath = "ticket-attachments/{$ticketId}";
         
-        if (!file_exists($directoryPath)) {
-            mkdir($directoryPath, 0755, true);
+        if (!Storage::disk('private')->exists($directoryPath)) {
+            Storage::disk('private')->makeDirectory($directoryPath);
+            Storage::disk('private')->setVisibility($directoryPath, 'private');
         }
     }
 
-    private static function processFileCollection(array $files, string $ticketId): array
+    private static function storeAllFiles(array $files, string $ticketId): array
     {
-        return array_map(function ($file) use ($ticketId) {
-            return self::processSingleFile($file, $ticketId);
-        }, $files);
+        $storedPaths = [];
+
+        foreach ($files as $file) {
+            if ($file instanceof TemporaryUploadedFile) {
+                $storedPaths[] = self::storeTemporaryFile($file, $ticketId);
+            } elseif (is_string($file)) {
+                $storedPaths[] = $file;
+            }
+        }
+
+        return $storedPaths;
     }
 
-    private static function processSingleFile(mixed $file, string $ticketId): string
+    private static function storeTemporaryFile(TemporaryUploadedFile $file, string $ticketId): string
     {
-        if ($file instanceof TemporaryUploadedFile) {
-            return self::storeUploadedFile($file, $ticketId);
-        }
+        $filename = $file->getClientOriginalName();
+        $storagePath = "ticket-attachments/{$ticketId}/{$filename}";
         
-        if (is_string($file) && Storage::disk('private')->exists($file)) {
-            return $file;
-        }
-        
-        throw new \InvalidArgumentException('Invalid file type provided');
-    }
-
-    private static function storeUploadedFile(TemporaryUploadedFile $file, string $ticketId): string
-    {
-        $originalName = $file->getClientOriginalName();
-        $safeFileName = self::generateSafeFileName($originalName);
-        $storagePath = "ticket-attachments/{$ticketId}/{$safeFileName}";
-        
-        $fileContents = file_get_contents($file->getRealPath());
-        Storage::disk('private')->put($storagePath, $fileContents);
+        Storage::disk('private')->put($storagePath, file_get_contents($file->getRealPath()));
+        Storage::disk('private')->setVisibility($storagePath, 'private');
         
         return $storagePath;
-    }
-
-    private static function generateSafeFileName(string $originalName): string
-    {
-        $extension = pathinfo($originalName, PATHINFO_EXTENSION);
-        $nameWithoutExtension = pathinfo($originalName, PATHINFO_FILENAME);
-        
-        $safeName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $nameWithoutExtension);
-        $safeName = substr($safeName, 0, 100);
-        
-        return $extension ? "{$safeName}.{$extension}" : $safeName;
     }
 
 }
