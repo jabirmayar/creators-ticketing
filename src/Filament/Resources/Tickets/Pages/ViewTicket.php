@@ -35,6 +35,7 @@ use daacreators\CreatorsTicketing\Events\TicketReplyAdded;
 use daacreators\CreatorsTicketing\Events\InternalNoteAdded;
 use daacreators\CreatorsTicketing\Events\TicketTransferred;
 use daacreators\CreatorsTicketing\Support\TicketFileHelper;
+use daacreators\CreatorsTicketing\Services\AutomationService;
 use daacreators\CreatorsTicketing\Traits\HasTicketPermissions;
 use daacreators\CreatorsTicketing\Http\Livewire\TicketTimeline;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
@@ -103,7 +104,9 @@ class ViewTicket extends ViewRecord
     public function assignTicket($assigneeId): void
     {
         $permissions = $this->getUserPermissions();
+        $user = Filament::auth()->user();
         $recordDepartmentId = $this->record->department_id;
+        
         $canAssignTickets = $permissions['is_admin'] || 
                             (isset($permissions['permissions'][$recordDepartmentId]) && $permissions['permissions'][$recordDepartmentId]['can_assign_tickets']);
 
@@ -112,10 +115,26 @@ class ViewTicket extends ViewRecord
             return;
         }
 
-        $this->record->update(['assignee_id' => $assigneeId]);
+        $oldAssigneeId = $this->record->assignee_id;
+        $newAssigneeId = $assigneeId;
 
-        $this->record->markSeenBy(Filament::auth()->user()?->getKey());
+        $this->record->update(['assignee_id' => $newAssigneeId]);
+
+        $this->record->activities()->create([
+            'user_id' => $user?->getKey(),
+            'description' => 'Ticket was assigned',
+            'old_value' => $oldAssigneeId ? User::find($oldAssigneeId)?->name ?? 'Unassigned' : 'Unassigned',
+            'new_value' => $newAssigneeId ? User::find($newAssigneeId)?->name ?? 'Unassigned' : 'Unassigned',
+        ]);
         
+        $this->record->markSeenBy($user?->getKey());
+        
+        $context = [
+            'old_assignee_id' => $oldAssigneeId,
+            'new_assignee_id' => $newAssigneeId,
+        ];
+        app(AutomationService::class)->processAutomations($this->record, 'ticket_assigned', $context);
+
         Notification::make()->title(__('creators-ticketing::resources.ticket.notifications.assigned'))->success()->send();
         
         $this->dispatch('$refresh');
@@ -170,6 +189,15 @@ class ViewTicket extends ViewRecord
         ]);
 
         $this->record->touch('last_activity_at');
+
+        $automationEvent = ($data['is_internal_note'] ?? false) ? 'internal_note_added' : 'reply_added';
+        $context = [
+            'reply_id' => $reply->id,
+            'reply_body' => $reply->content,
+            'user_id' => $reply->user_id
+        ];
+
+        app(AutomationService::class)->processAutomations($this->record, $automationEvent, $context);
 
         if ($data['is_internal_note'] ?? false) {
             event(new InternalNoteAdded($this->record, $reply));

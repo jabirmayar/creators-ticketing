@@ -47,6 +47,8 @@ class Department extends Model
             'can_reply_to_tickets',
             'can_add_internal_notes',
             'can_view_internal_notes',
+            'can_manage_automations',
+            'can_view_automation_logs',
         ]);
     }
 

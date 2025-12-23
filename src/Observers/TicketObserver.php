@@ -5,14 +5,15 @@ namespace daacreators\CreatorsTicketing\Observers;
 use App\Models\User;
 use Illuminate\Support\Str;
 use daacreators\CreatorsTicketing\Models\Ticket;
+use daacreators\CreatorsTicketing\Events\TicketClosed;
 use daacreators\CreatorsTicketing\Models\TicketStatus;
 use daacreators\CreatorsTicketing\Enums\TicketPriority;
 use daacreators\CreatorsTicketing\Events\TicketCreated;
+use daacreators\CreatorsTicketing\Events\TicketDeleted;
 use daacreators\CreatorsTicketing\Events\TicketAssigned;
 use daacreators\CreatorsTicketing\Events\TicketStatusChanged;
+use daacreators\CreatorsTicketing\Services\AutomationService;
 use daacreators\CreatorsTicketing\Events\TicketPriorityChanged;
-use daacreators\CreatorsTicketing\Events\TicketClosed;
-use daacreators\CreatorsTicketing\Events\TicketDeleted;
 
 class TicketObserver
 {
@@ -50,6 +51,8 @@ class TicketObserver
         ]);
 
         event(new TicketCreated($ticket, auth()->user()));
+
+        app(AutomationService::class)->processAutomations($ticket, 'ticket_created');
     }
 
     public function updating(Ticket $ticket): void
@@ -110,12 +113,13 @@ class TicketObserver
             $oldAssigneeId = $ticket->getOriginal('assignee_id');
             $newAssigneeId = $ticket->assignee_id;
 
-            event(new TicketAssigned(
-                $ticket,
-                $oldAssigneeId,
-                $newAssigneeId,
-                auth()->user()
-            ));
+            event(new TicketAssigned($ticket, $oldAssigneeId, $newAssigneeId, auth()->user()));
+
+            $context = [
+                'old_assignee_id' => $oldAssigneeId,
+                'new_assignee_id' => $newAssigneeId,
+            ];
+            app(AutomationService::class)->processAutomations($ticket, 'ticket_assigned', $context);
         }
 
         if ($ticket->wasChanged('ticket_status_id')) {
@@ -125,29 +129,35 @@ class TicketObserver
             $oldStatus = $oldStatusId ? TicketStatus::find($oldStatusId) : null;
             $newStatus = TicketStatus::find($newStatusId);
 
-            event(new TicketStatusChanged(
-                $ticket,
-                $oldStatus,
-                $newStatus,
-                auth()->user()
-            ));
+            event(new TicketStatusChanged($ticket, $oldStatus, $newStatus, auth()->user()));
 
             if ($newStatus && $newStatus->is_closing_status) {
                 event(new TicketClosed($ticket, auth()->user()));
             }
+            
+            $context = [
+                'old_status_id' => $oldStatusId,
+                'new_status_id' => $newStatusId,
+            ];
+            app(AutomationService::class)->processAutomations($ticket, 'status_changed', $context);
         }
 
         if ($ticket->wasChanged('priority')) {
-            $oldPriority = TicketPriority::from($ticket->getRawOriginal('priority'));
+            $oldPriorityVal = $ticket->getRawOriginal('priority');
+            $oldPriority = TicketPriority::tryFrom($oldPriorityVal) ?? $oldPriorityVal;
             $newPriority = $ticket->priority;
 
-            event(new TicketPriorityChanged(
-                $ticket,
-                $oldPriority,
-                $newPriority,
-                auth()->user()
-            ));
+            event(new TicketPriorityChanged($ticket, $oldPriority, $newPriority, auth()->user()));
+        
+            $context = [
+                'old_priority' => $oldPriorityVal, 
+                'new_priority' => $newPriority->value,
+            ];
+            app(AutomationService::class)->processAutomations($ticket, 'priority_changed', $context);
         }
+        
+        $changes = $ticket->getChanges();
+        app(AutomationService::class)->processAutomations($ticket, 'ticket_updated', $changes);
     }
 
     public function deleting(Ticket $ticket): void
@@ -157,34 +167,6 @@ class TicketObserver
             $ticket->ticket_uid,
             auth()->user()
         ));
-    }
-
-    public function replying(Ticket $ticket, $reply): void
-    {
-        $activityType = $reply->is_internal_note ? 'Internal note added' : 'Reply sent';
-        
-        $ticket->activities()->create([
-            'user_id' => $reply->user_id,
-            'description' => $activityType,
-            'new_value' => substr(strip_tags($reply->content), 0, 100) . '...',
-        ]);
-
-        $ticket->last_activity_at = now();
-
-        if ($reply->user_id == $ticket->user_id) {
-            $ticket->is_seen = false;
-            $ticket->seen_by = null;
-            $ticket->seen_at = null;
-        }
-
-        $ticket->saveQuietly();
-
-        if ($reply instanceof \daacreators\CreatorsTicketing\Models\TicketReply) {
-            $reply->is_seen = false;
-            $reply->seen_by = null;
-            $reply->seen_at = null;
-            $reply->saveQuietly();
-        }
     }
 
     protected function generateTicketUid(): string
@@ -202,5 +184,4 @@ class TicketObserver
 
         return $uid;
     }
-
 }

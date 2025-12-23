@@ -8,6 +8,7 @@ use daacreators\CreatorsTicketing\Filament\Resources\Forms\FormResource;
 use daacreators\CreatorsTicketing\Filament\Resources\Tickets\TicketResource;
 use daacreators\CreatorsTicketing\Filament\Resources\Departments\DepartmentResource;
 use daacreators\CreatorsTicketing\Filament\Resources\TicketStatuses\TicketStatusResource;
+use daacreators\CreatorsTicketing\Filament\Resources\AutomationRules\AutomationRuleResource;
 
 class TicketingPlugin implements Plugin
 {
@@ -23,6 +24,7 @@ class TicketingPlugin implements Plugin
             DepartmentResource::class,
             TicketResource::class,
             TicketStatusResource::class,
+            AutomationRuleResource::class,
         ]);
     }
 

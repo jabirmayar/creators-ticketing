@@ -14,6 +14,9 @@ A robust and dynamic ticketing system plugin for Filament 4, providing a complet
 ![Ticket View](screenshots/ticket-view.png)
 *Ticket View*
 
+![Create Automation](screenshots/automation.png)
+*Create Automation*
+
 ![Submit Ticket Form](screenshots/submit-ticket.png)
 *Submit Ticket Form*
 
@@ -38,7 +41,8 @@ A robust and dynamic ticketing system plugin for Filament 4, providing a complet
 - File attachments support
 - Responsive design
 - Multi-language support
-- **Event system for extensibility**
+- Event system for extensibility
+- Automation based on events
 - Seamless integration with Filament 4
 
 ## Requirements
@@ -110,8 +114,8 @@ The seeder uses `updateOrCreate` to prevent duplicates, so you can safely run it
 
 ## Upgrading
 
-### Upgrading from v1.0.5 to v1.0.6
-**⚠️ Important:** Version 1.0.6 introduces new fields to the database table. If you are upgrading from a previous version, you **must** run the migrations after updating the package to ensure the system functions correctly:
+### Upgrading from v1.1.4 to v1.1.5
+**⚠️ Important:** Version v1.1.5 and introduces new fields to the database table. If you are upgrading from a previous version, you **must** run the migrations after updating the package to ensure the system functions correctly:
 ```bash
 php artisan migrate
 ```
@@ -358,6 +362,41 @@ class SlackHighPriorityAlert
     }
 }
 ```
+
+## Automation Rules
+
+Automation rules allow you to automate actions on tickets based on specific events and conditions.  
+
+### Supported Events
+
+- Ticket created
+- Ticket updated
+- Status changed
+- Priority Changed
+- Ticket assigned
+- Reply Added
+- Internal Note Added
+
+### Conditions
+
+- Department
+- Form
+- Status
+- Priority
+- Assignee
+- Requester
+- Created within X hours
+- Last activity within X hours
+
+### Actions
+
+- Assign ticket to agent
+- Change ticket status
+- Change ticket priority
+- Transfer ticket to another department
+- Add internal note
+- Add public reply
+
 
 ## Security
 

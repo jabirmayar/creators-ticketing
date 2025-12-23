@@ -46,6 +46,8 @@ trait HasTicketPermissions
                 'can_reply_to_tickets' => $dept->can_reply_to_tickets,
                 'can_add_internal_notes' => $dept->can_add_internal_notes,
                 'can_view_internal_notes' => $dept->can_view_internal_notes,
+                'can_manage_automations' => $dept->can_manage_automations,
+                'can_view_automation_logs' => $dept->can_view_automation_logs,
             ];
         }
 
@@ -96,5 +98,23 @@ trait HasTicketPermissions
     public static function canAccess(array $parameters = []): bool
     {
         return static::canAccessNavigation();
+    }
+
+    public static function userCan(string $permissionKey): bool
+    {
+        $instance = new static();
+        $data = $instance->getUserPermissions();
+
+        if ($data['is_admin']) {
+            return true;
+        }
+
+        foreach ($data['permissions'] as $deptPerms) {
+            if (!empty($deptPerms[$permissionKey])) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

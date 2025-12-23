@@ -92,6 +92,12 @@ class AgentsRelationManager extends RelationManager
                 IconColumn::make('pivot.can_view_internal_notes')
                     ->label(__('creators-ticketing::resources.agent.columns.view_notes'))
                     ->boolean(),
+                IconColumn::make('pivot.can_manage_automations')
+                    ->label(__('creators-ticketing::resources.agent.columns.manage_automations'))
+                    ->boolean(),
+                IconColumn::make('pivot.can_view_automation_logs')
+                    ->label(__('creators-ticketing::resources.agent.columns.view_automation_logs'))
+                    ->boolean(),
                 IconColumn::make('pivot.can_delete_tickets')
                     ->label(__('creators-ticketing::resources.agent.columns.delete'))
                     ->boolean(),
@@ -158,6 +164,8 @@ class AgentsRelationManager extends RelationManager
                                         $set('can_reply_to_tickets', true);
                                         $set('can_add_internal_notes', true);
                                         $set('can_view_internal_notes', true);
+                                        $set('can_manage_automations', true);
+                                        $set('can_view_automation_logs', true);
                                     } elseif ($state === 'editor') {
                                         $set('can_create_tickets', false);
                                         $set('can_view_all_tickets', true);
@@ -169,6 +177,8 @@ class AgentsRelationManager extends RelationManager
                                         $set('can_reply_to_tickets', true);
                                         $set('can_add_internal_notes', true);
                                         $set('can_view_internal_notes', true);
+                                        $set('can_manage_automations', true);
+                                        $set('can_view_automation_logs', false);
                                     } elseif ($state === 'agent') {
                                         $set('can_create_tickets', false);
                                         $set('can_view_all_tickets', false);
@@ -180,6 +190,8 @@ class AgentsRelationManager extends RelationManager
                                         $set('can_reply_to_tickets', true);
                                         $set('can_add_internal_notes', false);
                                         $set('can_view_internal_notes', true);
+                                        $set('can_manage_automations', false);
+                                        $set('can_view_automation_logs', false);
                                     }
                                 })
                                 ->required(),
@@ -213,6 +225,12 @@ class AgentsRelationManager extends RelationManager
                                     Toggle::make('can_view_internal_notes')
                                         ->label(__('creators-ticketing::resources.agent.permissions.can_view_internal_notes'))
                                         ->helperText(__('creators-ticketing::resources.agent.permissions.can_view_internal_notes_helper')),
+                                    Toggle::make('can_manage_automations')
+                                        ->label(__('creators-ticketing::resources.agent.permissions.can_manage_automations'))
+                                        ->helperText(__('creators-ticketing::resources.agent.permissions.can_manage_automations_helper')),
+                                    Toggle::make('can_view_automation_logs')
+                                        ->label(__('creators-ticketing::resources.agent.permissions.can_view_automation_logs'))
+                                        ->helperText(__('creators-ticketing::resources.agent.permissions.can_view_automation_logs_helper')),
                                     Toggle::make('can_delete_tickets')
                                         ->label(__('creators-ticketing::resources.agent.permissions.can_delete_tickets'))
                                         ->helperText(__('creators-ticketing::resources.agent.permissions.can_delete_tickets_helper')),
@@ -253,6 +271,8 @@ class AgentsRelationManager extends RelationManager
                                 'can_reply_to_tickets',
                                 'can_add_internal_notes',
                                 'can_view_internal_notes',
+                                'can_manage_automations',
+                                'can_view_automation_logs',
                             ];
 
                             foreach ($newAgentIds as $userId) {
@@ -300,6 +320,8 @@ class AgentsRelationManager extends RelationManager
                                         $set('can_reply_to_tickets', true);
                                         $set('can_add_internal_notes', true);
                                         $set('can_view_internal_notes', true);
+                                        $set('can_manage_automations', true);
+                                        $set('can_view_automation_logs', true);
                                     } elseif ($state === 'editor') {
                                         $set('can_create_tickets', false);
                                         $set('can_view_all_tickets', true);
@@ -311,6 +333,8 @@ class AgentsRelationManager extends RelationManager
                                         $set('can_reply_to_tickets', true);
                                         $set('can_add_internal_notes', true);
                                         $set('can_view_internal_notes', true);
+                                        $set('can_manage_automations', true);
+                                        $set('can_view_automation_logs', false);
                                     } elseif ($state === 'agent') {
                                         $set('can_create_tickets', false);
                                         $set('can_view_all_tickets', false);
@@ -322,6 +346,8 @@ class AgentsRelationManager extends RelationManager
                                         $set('can_reply_to_tickets', true);
                                         $set('can_add_internal_notes', false);
                                         $set('can_view_internal_notes', true);
+                                        $set('can_manage_automations', false);
+                                        $set('can_view_automation_logs', false);
                                     }
                                 })
                                 ->required(),
@@ -364,6 +390,12 @@ class AgentsRelationManager extends RelationManager
                                         ->label(__('creators-ticketing::resources.agent.permissions.can_view_internal_notes'))
                                         ->default($record->pivot->can_view_internal_notes)
                                         ->helperText(__('creators-ticketing::resources.agent.permissions.can_view_internal_notes_helper')),
+                                    Toggle::make('can_manage_automations')
+                                        ->label(__('creators-ticketing::resources.agent.permissions.can_manage_automations'))
+                                        ->default($record->pivot->can_manage_automations),
+                                    Toggle::make('can_view_automation_logs')
+                                        ->label(__('creators-ticketing::resources.agent.permissions.can_view_automation_logs'))
+                                        ->default($record->pivot->can_view_automation_logs),
                                     Toggle::make('can_delete_tickets')
                                         ->label(__('creators-ticketing::resources.agent.permissions.can_delete_tickets'))
                                         ->default($record->pivot->can_delete_tickets)
@@ -385,6 +417,8 @@ class AgentsRelationManager extends RelationManager
                             'can_reply_to_tickets' => $data['can_reply_to_tickets'],
                             'can_add_internal_notes' => $data['can_add_internal_notes'],
                             'can_view_internal_notes' => $data['can_view_internal_notes'],
+                            'can_manage_automations' => $data['can_manage_automations'],
+                            'can_view_automation_logs' => $data['can_view_automation_logs'],
                         ]);
                         Notification::make()
                             ->success()
