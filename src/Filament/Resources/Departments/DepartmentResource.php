@@ -22,6 +22,7 @@ use Filament\Tables\Filters\TernaryFilter;
 use daacreators\CreatorsTicketing\Models\Form;
 use Filament\Schemas\Components\Utilities\Set;
 use daacreators\CreatorsTicketing\Models\Department;
+use daacreators\CreatorsTicketing\Support\UserNameResolver;
 use daacreators\CreatorsTicketing\Traits\HasTicketingNavGroup;
 use daacreators\CreatorsTicketing\Traits\HasNavigationVisibility;
 use daacreators\CreatorsTicketing\Filament\Resources\Departments\Pages;
@@ -120,6 +121,20 @@ class DepartmentResource extends Resource
                     )
                     ->color('info')
                     ->separator(', '), 
+
+                TextColumn::make('agents')
+                    ->label(__('creators-ticketing::resources.department.agents'))
+                    ->limitList(2)
+                    ->listWithLineBreaks()
+                    ->expandableLimitedList()
+                    ->badge()
+                    ->state(fn ($record) => 
+                        $record->agents->map(fn ($agent) => UserNameResolver::resolve($agent))->toArray()
+                    )
+                    ->tooltip(fn ($record) =>
+                        $record->agents->map(fn ($agent) => UserNameResolver::resolve($agent))->implode(', ')
+                    )
+                    ->color('success'), 
 
                 TextColumn::make('visibility')
                     ->label(__('creators-ticketing::resources.department.visibility'))

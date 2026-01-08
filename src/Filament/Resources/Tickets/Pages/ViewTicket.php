@@ -860,7 +860,10 @@ class ViewTicket extends ViewRecord
                                                     ->where(config('creators-ticketing.table_prefix') . 'department_users.department_id', $departmentId);
                                             })
                                         )
-                                        ->where(fn ($query) => $query->where('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%"))
+                                        ->where(function ($query) use ($search) {
+                                            $nameColumn = config('creators-ticketing.user_name_column', 'name');
+                                            $query->where($nameColumn, 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%");
+                                        })
                                         ->limit(50)
                                         ->get()
                                         ->mapWithKeys(fn($user) => [$user->getKey() => UserNameResolver::resolve($user) . ' - ' . $user->email]);
@@ -893,7 +896,8 @@ class ViewTicket extends ViewRecord
                                     ->searchable()
                                     ->getSearchResultsUsing(function (string $search) {
                                         $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
-                                        return $userModel::where('name', 'like', "%{$search}%")
+                                        $nameColumn = config('creators-ticketing.user_name_column', 'name');
+                                        return $userModel::where($nameColumn, 'like', "%{$search}%")
                                             ->orWhere('email', 'like', "%{$search}%")
                                             ->limit(50)
                                             ->get()
@@ -968,10 +972,11 @@ class ViewTicket extends ViewRecord
                                     )
                                     ->where($tablePrefix . 'department_users.department_id', $departmentId);
                             })
-                            ->where(fn ($query) => $query
-                                ->where('name', 'like', "%{$search}%")
-                                ->orWhere('email', 'like', "%{$search}%")
-                            )
+                            ->where(function ($query) use ($search) {
+                                $nameColumn = config('creators-ticketing.user_name_column', 'name');
+                                $query->where($nameColumn, 'like', "%{$search}%")
+                                    ->orWhere('email', 'like', "%{$search}%");
+                            })
                             ->limit(50)
                             ->get()
                             ->mapWithKeys(fn($user) => [$user->getKey() => UserNameResolver::resolve($user) . ' - ' . $user->email]);

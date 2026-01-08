@@ -26,8 +26,6 @@ class AgentsRelationManager extends RelationManager
 {
     protected static string $relationship = 'agents';
 
-    protected static ?string $recordTitleAttribute = 'name';
-
     public static function getTitle(Model $ownerRecord, string $pageClass): string
     {
         return __('creators-ticketing::resources.agent.title');
@@ -36,11 +34,12 @@ class AgentsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
+        $nameColumn = config('creators-ticketing.user_name_column', 'name');
 
         return $table
-            ->recordTitleAttribute('name')
+            ->recordTitleAttribute($nameColumn)
             ->columns([
-                TextColumn::make('name')
+                TextColumn::make($nameColumn)
                     ->label(__('creators-ticketing::resources.agent.name'))
                     ->searchable()
                     ->sortable(),
@@ -122,8 +121,9 @@ class AgentsRelationManager extends RelationManager
                                     $userInstance = new $userModel; 
                                     $userKey = $userInstance->getKeyName();
                                     
+                                    $nameColumn = config('creators-ticketing.user_name_column', 'name');
                                     return $userModel::query()
-                                        ->where('name', 'like', "%{$search}%")
+                                        ->where($nameColumn, 'like', "%{$search}%")
                                         ->orWhere('email', 'like', "%{$search}%")
                                         ->limit(50)
                                         ->get()

@@ -69,6 +69,7 @@ return [
         'description' => 'Description',
         'is_active' => 'Is Active',
         'created_at' => 'Created At',
+        'agents' => 'Agents'
     ],
     'agent' => [
         'title' => 'Agents',

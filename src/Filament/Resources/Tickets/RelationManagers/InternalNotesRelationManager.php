@@ -11,6 +11,7 @@ use Filament\Tables\Columns\Layout\Split;
 use Filament\Resources\RelationManagers\RelationManager;
 use Illuminate\Database\Eloquent\Model;
 use Livewire\Attributes\On;
+use daacreators\CreatorsTicketing\Support\UserNameResolver;
 
 class InternalNotesRelationManager extends RelationManager
 {
@@ -34,12 +35,12 @@ class InternalNotesRelationManager extends RelationManager
             ->columns([
                 Stack::make([
                     Split::make([
-                        TextColumn::make('user.name')
+                        TextColumn::make('user')
                             ->icon('heroicon-o-shield-check')
                             ->badge()
                             ->color('warning')
                             ->weight(FontWeight::Bold)
-                            ->formatStateUsing(fn($state) => "{$state} • " . __('creators-ticketing::resources.internal_note.agent_note')),
+                            ->formatStateUsing(fn($record) => UserNameResolver::resolve($record->user) . " • " . __('creators-ticketing::resources.internal_note.agent_note')),
 
                         TextColumn::make('created_at')
                             ->since()
