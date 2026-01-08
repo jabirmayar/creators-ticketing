@@ -11,6 +11,7 @@ use daacreators\CreatorsTicketing\Enums\TicketPriority;
 use daacreators\CreatorsTicketing\Events\TicketCreated;
 use daacreators\CreatorsTicketing\Events\TicketDeleted;
 use daacreators\CreatorsTicketing\Events\TicketAssigned;
+use daacreators\CreatorsTicketing\Support\UserNameResolver;
 use daacreators\CreatorsTicketing\Events\TicketStatusChanged;
 use daacreators\CreatorsTicketing\Services\AutomationService;
 use daacreators\CreatorsTicketing\Events\TicketPriorityChanged;
@@ -67,8 +68,8 @@ class TicketObserver
             $ticket->activities()->create([
                 'user_id' => auth()->id(),
                 'description' => 'Ticket was assigned',
-                'old_value' => $oldAssignee?->name ?? 'Unassigned',
-                'new_value' => $newAssignee?->name ?? 'Unassigned',
+                'old_value' => $oldAssignee ? UserNameResolver::resolve($oldAssignee) : 'Unassigned',
+                'new_value' => $newAssignee ? UserNameResolver::resolve($newAssignee) : 'Unassigned',
             ]);
         }
 

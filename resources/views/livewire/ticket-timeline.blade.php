@@ -57,7 +57,7 @@ x-init="
                         <span :style="isDark ? 
                             'font-size: 0.75rem; font-weight: 500; color: #9ca3af;' : 
                             'font-size: 0.75rem; font-weight: 500; color: #6b7280;'">
-                            👤 {{ $activity->user?->name ?? __('creators-ticketing::resources.timeline.system') }}
+                            👤 {{ \daacreators\CreatorsTicketing\Support\UserNameResolver::resolve($activity->user) ?? __('creators-ticketing::resources.timeline.system') }}
                         </span>
                     </div>
 

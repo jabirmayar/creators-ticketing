@@ -8,6 +8,7 @@ use daacreators\CreatorsTicketing\Models\Ticket;
 use daacreators\CreatorsTicketing\Models\AutomationRule;
 use daacreators\CreatorsTicketing\Models\AutomationLog;
 use daacreators\CreatorsTicketing\Enums\TicketPriority;
+use daacreators\CreatorsTicketing\Support\UserNameResolver;
 
 class AutomationService
 {
@@ -376,8 +377,8 @@ class AutomationService
             '{ticket_id}' => $ticket->ticket_uid ?? $ticket->id,
             '{ticket_title}' => $ticket->title ?? '',
             '{department}' => $ticket->department?->name ?? 'Unknown Department',
-            '{requester}' => $ticket->requester?->name ?? 'Unknown User',
-            '{assignee}' => $ticket->assignee?->name ?? 'Unassigned',
+            '{requester}' => $ticket->requester ? UserNameResolver::resolve($ticket->requester) : 'Unknown User',
+            '{assignee}' => $ticket->assignee ? UserNameResolver::resolve($ticket->assignee) : 'Unassigned',
             '{status}' => $ticket->status?->name ?? 'Unknown Status',
             '{priority}' => $ticket->priority?->getLabel() ?? 'Unknown Priority',
             '{rule_name}' => $rule->name,

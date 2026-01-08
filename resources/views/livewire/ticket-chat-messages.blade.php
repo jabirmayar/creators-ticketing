@@ -74,7 +74,7 @@
 
                 <div wire:key="reply-{{ $reply->id }}" style="display:flex;align-items:end;gap:0.625rem;{{ $isRequester ? 'flex-direction:row;' : 'flex-direction:row-reverse;' }}">
                     <div style="width:2.5rem;height:2.5rem;border-radius:9999px;background:#f43f5e;display:flex;align-items:center;justify-content:center;color:white;font-weight:600;font-size:0.875rem;flex-shrink:0;">
-                        {{ strtoupper(substr($reply->user->name ?? 'U', 0, 1)) }}
+                        {{ strtoupper(substr(daacreators\CreatorsTicketing\Support\UserNameResolver::resolve($reply->user) ?? 'U', 0, 1)) }}
                     </div>
 
                     <div style="display:flex;flex-direction:column;gap:0.25rem;max-width:70%;{{ $isRequester ? 'align-items:start;' : 'align-items:end;' }}">

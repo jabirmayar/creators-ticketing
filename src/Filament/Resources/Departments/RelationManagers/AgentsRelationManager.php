@@ -20,6 +20,7 @@ use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Resources\RelationManagers\RelationManager;
+use daacreators\CreatorsTicketing\Support\UserNameResolver;
 
 class AgentsRelationManager extends RelationManager
 {
@@ -127,7 +128,7 @@ class AgentsRelationManager extends RelationManager
                                         ->limit(50)
                                         ->get()
                                         ->mapWithKeys(fn ($user) => [
-                                            $user->{$userKey} => "{$user->name} - {$user->email}"
+                                            $user->{$userKey} => UserNameResolver::resolve($user) . ' - ' . $user->email,
                                         ]);
                                 })
                                 ->getOptionLabelsUsing(function (array $values) use ($userModel) {
@@ -137,7 +138,7 @@ class AgentsRelationManager extends RelationManager
                                     return $userModel::whereIn($userKey, $values) 
                                         ->get()
                                         ->mapWithKeys(fn ($user) => [
-                                            $user->{$userKey} => "{$user->name} - {$user->email}"
+                                            $user->{$userKey} => UserNameResolver::resolve($user) . ' - ' . $user->email,
                                         ])
                                         ->toArray();
                                 })

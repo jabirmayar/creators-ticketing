@@ -32,7 +32,7 @@
             <div class="flex {{ $isUser ? 'justify-end' : 'justify-start' }} animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <div class="flex items-end gap-2 max-w-[85%] sm:max-w-[75%] {{ $isUser ? 'flex-row-reverse' : '' }}">
                     <div class="w-8 h-8 rounded-full {{ $isUser ? 'bg-blue-600' : 'bg-gray-600' }} flex items-center justify-center text-white text-sm font-semibold flex-shrink-0 shadow-sm">
-                        {{ strtoupper(substr($reply->user->name, 0, 1)) }}
+                        {{ strtoupper(substr(daacreators\CreatorsTicketing\Support\UserNameResolver::resolve($reply->user), 0, 1)) }}
                     </div>
                     
                     <div class="flex flex-col {{ $isUser ? 'items-end' : 'items-start' }}">
@@ -43,7 +43,7 @@
                         </div>
                         
                         <div class="flex items-center gap-2 mt-1 px-2">
-                            <span class="text-xs text-gray-500 font-medium">{{ $reply->user->name }}</span>
+                            <span class="text-xs text-gray-500 font-medium">{{ \daacreators\CreatorsTicketing\Support\UserNameResolver::resolve($reply->user) }}</span>
                             <span class="text-xs text-gray-300">•</span>
                             <span class="text-xs text-gray-400">
                                 @php

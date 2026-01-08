@@ -35,6 +35,7 @@ use daacreators\CreatorsTicketing\Events\TicketReplyAdded;
 use daacreators\CreatorsTicketing\Events\InternalNoteAdded;
 use daacreators\CreatorsTicketing\Events\TicketTransferred;
 use daacreators\CreatorsTicketing\Support\TicketFileHelper;
+use daacreators\CreatorsTicketing\Support\UserNameResolver;
 use daacreators\CreatorsTicketing\Services\AutomationService;
 use daacreators\CreatorsTicketing\Traits\HasTicketPermissions;
 use daacreators\CreatorsTicketing\Http\Livewire\TicketTimeline;
@@ -123,8 +124,8 @@ class ViewTicket extends ViewRecord
         $this->record->activities()->create([
             'user_id' => $user?->getKey(),
             'description' => 'Ticket was assigned',
-            'old_value' => $oldAssigneeId ? User::find($oldAssigneeId)?->name ?? 'Unassigned' : 'Unassigned',
-            'new_value' => $newAssigneeId ? User::find($newAssigneeId)?->name ?? 'Unassigned' : 'Unassigned',
+            'old_value' => $oldAssigneeId ? UserNameResolver::resolve(User::find($oldAssigneeId)) : 'Unassigned',
+            'new_value' => $newAssigneeId ? UserNameResolver::resolve(User::find($newAssigneeId)) : 'Unassigned',
         ]);
         
         $this->record->markSeenBy($user?->getKey());
@@ -333,8 +334,8 @@ class ViewTicket extends ViewRecord
         
         if (isset($updateData['assignee_id']) && $updateData['assignee_id']) {
             $newAssignee = $userModel::find($updateData['assignee_id']);
-            $activityDescription .= ' and assigned to ' . $newAssignee->name;
-            $activityNewValue .= ' (Assigned: ' . $newAssignee->name . ')';
+            $activityDescription .= ' and assigned to ' . UserNameResolver::resolve($newAssignee);
+            $activityNewValue .= ' (Assigned: ' . UserNameResolver::resolve($newAssignee) . ')';
         } elseif ($currentAssigneeId && !isset($updateData['assignee_id'])) {
             $activityDescription .= ' (assignee removed - not in new department)';
         }
@@ -593,7 +594,9 @@ class ViewTicket extends ViewRecord
                                             ->schema([
                                                 Group::make()
                                                     ->schema([
-                                                        TextEntry::make('requester.name')
+                                                        TextEntry::make('requester')
+                                                            ->label(__('creators-ticketing::resources.ticket.requester'))
+                                                            ->formatStateUsing(fn ($record) => UserNameResolver::resolve($record->requester))
                                                             ->icon('heroicon-o-user-circle')
                                                             ->size(TextSize::Large)
                                                             ->weight(FontWeight::Bold),
@@ -722,8 +725,9 @@ class ViewTicket extends ViewRecord
                                                     ->icon('heroicon-o-clock')
                                                     ->color('success'),
                                                 
-                                                TextEntry::make('assignee.name')
+                                                TextEntry::make('assignee')
                                                     ->label(__('creators-ticketing::resources.ticket.assignee'))
+                                                    ->formatStateUsing(fn ($record) => $record->assignee ? UserNameResolver::resolve($record->assignee) : __('creators-ticketing::resources.ticket.unassigned'))
                                                     ->default(__('creators-ticketing::resources.ticket.unassigned'))
                                                     ->icon('heroicon-o-user-plus')
                                                     ->color('success'),
@@ -861,23 +865,24 @@ class ViewTicket extends ViewRecord
                                         ->where(fn ($query) => $query->where('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%"))
                                         ->limit(50)
                                         ->get()
-                                        ->mapWithKeys(fn($user) => [$user->getKey() => $user->name . ' - ' . $user->email]);
+                                        ->mapWithKeys(fn($user) => [$user->getKey() => UserNameResolver::resolve($user) . ' - ' . $user->email]);
                                     })
                                     ->getOptionLabelUsing(function ($value) {
                                         $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
-                                        return $userModel::find($value)?->name . ' - ' . $userModel::find($value)?->email;
+                                        $user = $userModel::find($value);
+                                        return $user ? UserNameResolver::resolve($user) . ' - ' . $user->email : null;
                                     })
                                     ->options(function () {
                                         $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
                                         if (config('creators-ticketing.ticket_assign_scope') === 'department_only') {
                                             $departmentId = $this->record->department_id;
                                             if ($departmentId) {
-                                                return Department::find($departmentId)?->agents->mapWithKeys(fn($user) => [$user->getKey() => $user->name . ' - ' . $user->email])->toArray() ?? [];
+                                                return Department::find($departmentId)?->agents->mapWithKeys(fn($user) => [$user->getKey() => UserNameResolver::resolve($user) . ' - ' . $user->email])->toArray() ?? [];
                                             }
                                         }
                                         return $userModel::limit(50)
                                             ->get()
-                                            ->mapWithKeys(fn($user) => [$user->getKey() => $user->name . ' - ' . $user->email])
+                                            ->mapWithKeys(fn($user) => [$user->getKey() => UserNameResolver::resolve($user) . ' - ' . $user->email])
                                             ->toArray();
                                     })
                                     ->default($this->record->assignee_id)
@@ -894,11 +899,12 @@ class ViewTicket extends ViewRecord
                                             ->orWhere('email', 'like', "%{$search}%")
                                             ->limit(50)
                                             ->get()
-                                            ->mapWithKeys(fn($user) => [$user->getKey() => $user->name . ' - ' . $user->email]);
+                                            ->mapWithKeys(fn($user) => [$user->getKey() => UserNameResolver::resolve($user) . ' - ' . $user->email]);
                                     })
                                     ->getOptionLabelUsing(function ($value) {
                                         $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
-                                        return $userModel::find($value)?->name . ' - ' . $userModel::find($value)?->email;
+                                        $user = $userModel::find($value);
+                                        return $user ? UserNameResolver::resolve($user) . ' - ' . $user->email : null;
                                     })
                                     ->default($this->record->assignee_id)
                                     ->preload(false)
@@ -960,11 +966,12 @@ class ViewTicket extends ViewRecord
                             )
                             ->limit(50)
                             ->get()
-                            ->mapWithKeys(fn($user) => [$user->getKey() => $user->name . ' - ' . $user->email]);
+                            ->mapWithKeys(fn($user) => [$user->getKey() => UserNameResolver::resolve($user) . ' - ' . $user->email]);
                         })
-                        ->getOptionLabelUsing(fn ($value): ?string => 
-                            $userModel::find($value)?->name . ' - ' . $userModel::find($value)?->email
-                        )
+                        ->getOptionLabelUsing(function ($value) use ($userModel): ?string {
+                            $user = $userModel::find($value);
+                            return $user ? UserNameResolver::resolve($user) . ' - ' . $user->email : null;
+                        })
                         ->options(function (Get $get) use ($userModel): array {
                             $departmentId = $get('department');
                             
@@ -974,7 +981,7 @@ class ViewTicket extends ViewRecord
                             
                             $department = Department::find($departmentId);
                             return $department?->agents
-                                ->mapWithKeys(fn($user) => [$user->getKey() => $user->name . ' - ' . $user->email])
+                                ->mapWithKeys(fn($user) => [$user->getKey() => UserNameResolver::resolve($user) . ' - ' . $user->email])
                                 ->toArray() ?? [];
                         })
                         ->default(function (Get $get) {

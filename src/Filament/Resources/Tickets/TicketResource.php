@@ -44,6 +44,7 @@ use daacreators\CreatorsTicketing\Models\Ticket;
 use daacreators\CreatorsTicketing\Models\Department;
 use daacreators\CreatorsTicketing\Enums\TicketPriority;
 use Filament\Infolists\Components\Section as InfoSection;
+use daacreators\CreatorsTicketing\Support\UserNameResolver;
 use daacreators\CreatorsTicketing\Traits\HasTicketingNavGroup;
 use daacreators\CreatorsTicketing\Traits\HasTicketPermissions;
 use daacreators\CreatorsTicketing\Filament\Resources\Tickets\Pages;
@@ -256,11 +257,11 @@ class TicketResource extends Resource
                                     ->orWhere('email', 'like', "%{$search}%")
                                     ->limit(50)
                                     ->get()
-                                    ->mapWithKeys(fn($user) => [$user->getKey() => $user->name . ' - ' . $user->email])
+                                    ->mapWithKeys(fn($user) => [$user->getKey() => UserNameResolver::resolve($user) . ' - ' . $user->email])
                             )
                            ->getOptionLabelUsing(function ($value) use ($userModel): ?string {
                                 $user = $userModel::find($value);
-                                return $user ? "{$user->name} - {$user->email}" : null;
+                                return $user ? UserNameResolver::resolve($user) . ' - ' . $user->email : null;
                             })
                             ->preload(false)
                             ->native(false)
@@ -499,11 +500,13 @@ class TicketResource extends Resource
                             ->html()
                             ->columnSpanFull(),
                         
-                        TextEntry::make('requester.name')
-                            ->label(__('creators-ticketing::resources.ticket.requester')),
+                        TextEntry::make('requester')
+                            ->label(__('creators-ticketing::resources.ticket.requester'))
+                            ->formatStateUsing(fn ($record) => UserNameResolver::resolve($record->requester)),
                         
-                        TextEntry::make('assignee.name')
+                        TextEntry::make('assignee')
                             ->label(__('creators-ticketing::resources.ticket.assignee'))
+                            ->formatStateUsing(fn ($record) => $record->assignee ? UserNameResolver::resolve($record->assignee) : __('creators-ticketing::resources.ticket.unassigned'))
                             ->default(__('creators-ticketing::resources.ticket.unassigned')),
                         
                         TextEntry::make('department.name')
@@ -692,14 +695,15 @@ class TicketResource extends Resource
                 TextColumn::make('requester.name')
                     ->label(__('creators-ticketing::resources.ticket.requester'))
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->formatStateUsing(fn ($record) => UserNameResolver::resolve($record->requester)),
                 
                 TextColumn::make('assignee.name')
                     ->label(__('creators-ticketing::resources.ticket.assignee'))
                     ->searchable()
                     ->sortable()
                     ->default(__('creators-ticketing::resources.ticket.unassigned'))
-                    ->formatStateUsing(fn ($state) => $state ?: __('creators-ticketing::resources.ticket.unassigned')),
+                    ->formatStateUsing(fn ($record) => $record->assignee ? UserNameResolver::resolve($record->assignee) : __('creators-ticketing::resources.ticket.unassigned')),
                 
                 TextColumn::make('status.name')
                     ->label(__('creators-ticketing::resources.ticket.status'))
@@ -784,22 +788,22 @@ class TicketResource extends Resource
                                         ->where(fn ($query) => $query->where('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%"))
                                         ->limit(50)
                                         ->get()
-                                        ->mapWithKeys(fn($user) => [$user->getKey() => $user->name . ' - ' . $user->email]);
+                                        ->mapWithKeys(fn($user) => [$user->getKey() => UserNameResolver::resolve($user) . ' - ' . $user->email]);
                                     })
                                     ->getOptionLabelUsing(function ($value) use ($userModel): ?string {
                                         $user = $userModel::find($value);
-                                        return $user ? "{$user->name} - {$user->email}" : null;
+                                        return $user ? UserNameResolver::resolve($user) . ' - ' . $user->email : null;
                                     })
                                     ->options(function (Component $component) use ($userModel): array {
                                         if (config('creators-ticketing.ticket_assign_scope') === 'department_only') {
                                             $departmentId = $component->getContainer()->getRecord()?->department_id;
                                             if ($departmentId) {
-                                                return Department::find($departmentId)?->agents->mapWithKeys(fn($user) => [$user->getKey() => $user->name . ' - ' . $user->email])->toArray() ?? [];
+                                                return Department::find($departmentId)?->agents->mapWithKeys(fn($user) => [$user->getKey() => UserNameResolver::resolve($user) . ' - ' . $user->email])->toArray() ?? [];
                                             }
                                         }
                                         return $userModel::limit(50)
                                             ->get()
-                                            ->mapWithKeys(fn($user) => [$user->getKey() => $user->name . ' - ' . $user->email])
+                                            ->mapWithKeys(fn($user) => [$user->getKey() => UserNameResolver::resolve($user) . ' - ' . $user->email])
                                             ->toArray();
                                     })
                                     ->default(fn (Model $record) => $record instanceof Ticket ? $record->assignee_id : null)
@@ -814,11 +818,11 @@ class TicketResource extends Resource
                                     ->orWhere('email', 'like', "%{$search}%")
                                     ->limit(50)
                                     ->get()
-                                    ->mapWithKeys(fn($user) => [$user->getKey() => $user->name . ' - ' . $user->email]);
+                                    ->mapWithKeys(fn($user) => [$user->getKey() => UserNameResolver::resolve($user) . ' - ' . $user->email]);
                                 })
                             ->getOptionLabelUsing(function ($value) use ($userModel): ?string {
                                 $user = $userModel::find($value);
-                                return $user ? "{$user->name} - {$user->email}" : null;
+                                return $user ? UserNameResolver::resolve($user) . ' - ' . $user->email : null;
                             })
                             ->default(fn (Model $record) => $record instanceof Ticket ? $record->assignee_id : null)
                             ->preload(false)
@@ -828,10 +832,11 @@ class TicketResource extends Resource
                         if (!$record instanceof Ticket) return;
                         $record->update(['assignee_id' => $data['assignee_id']]);
 
+                        $assignee = $userModel::find($data['assignee_id']);
                         $record->activities()->create([
                             'user_id' => Filament::auth()->user()->getKey(),
                             'description' => 'Ticket assigned',
-                            'new_value' => $userModel::find($data['assignee_id'])?->name,
+                            'new_value' => $assignee ? UserNameResolver::resolve($assignee) : null,
                         ]);
                         
                         Notification::make()
