@@ -771,15 +771,14 @@ class TicketResource extends Resource
                                         $departmentId = $component->getContainer()->getRecord()?->department_id;
                                         $userInstance = new $userModel;
                                         $userKey = $userInstance->getKeyName();
-                                        $pivotUserColumn = "user_{$userKey}";
 
                                         return $userModel::when(
                                             config('creators-ticketing.ticket_assign_scope') === 'department_only' && $departmentId !== null,
-                                            fn ($query) => $query->whereExists(function ($subquery) use ($departmentId, $pivotUserColumn, $userKey) {
+                                            fn ($query) => $query->whereExists(function ($subquery) use ($departmentId, $userKey) {
                                                 $subquery->select(DB::raw(1))
                                                     ->from(config('creators-ticketing.table_prefix') . 'department_users')
                                                     ->whereColumn(
-                                                        config('creators-ticketing.table_prefix') . "department_users.{$pivotUserColumn}",
+                                                        config('creators-ticketing.table_prefix') . "department_users.user_id",
                                                         "users.{$userKey}"
                                                     )
                                                     ->where(config('creators-ticketing.table_prefix') . 'department_users.department_id', $departmentId);

@@ -78,6 +78,10 @@ class AutomationRuleResource extends Resource
         $getFilteredUserOptions = function (callable $get) use ($userModel, $allowedUserField, $allowedUserValues, $pivotTableName) {
             $selectedDepartmentIds = $get('conditions.department_id');
             $allUsers = collect();
+            
+            $userInstance = new $userModel;
+            $userKey = $userInstance->getKeyName();
+            $nameColumn = config('creators-ticketing.user_name_column', 'name');
 
             if (!empty($selectedDepartmentIds)) {
                 $userIds = DB::table($pivotTableName)
@@ -85,14 +89,14 @@ class AutomationRuleResource extends Resource
                     ->pluck('user_id')
                     ->toArray();
 
-                $departmentUsers = $userModel::whereIn('id', $userIds)->get();
+                $departmentUsers = $userModel::whereIn($userKey, $userIds)->get();
                 $allUsers = $allUsers->merge($departmentUsers);
             }
 
             $configAllowedUsers = $userModel::whereIn($allowedUserField, $allowedUserValues)->get();
             $allUsers = $allUsers->merge($configAllowedUsers);
 
-            return $allUsers->unique('id')->sortBy('name')->pluck('name', 'id')->toArray();
+            return $allUsers->unique($userKey)->sortBy($nameColumn)->pluck($nameColumn, $userKey)->toArray();
         };
         
         return $schema->schema([
@@ -212,8 +216,18 @@ class AutomationRuleResource extends Resource
                                         ->label(__('creators-ticketing::resources.automation.conditions.requester'))
                                         ->multiple()
                                         ->searchable()
-                                        ->getSearchResultsUsing(fn (string $search) => $userModel::where('name', 'like', "%{$search}%")->limit(50)->pluck('name', 'id'))
-                                        ->getOptionLabelsUsing(fn (array $values) => $userModel::whereIn('id', $values)->pluck('name', 'id'))
+                                        ->getSearchResultsUsing(function (string $search) use ($userModel) {
+                                            $userInstance = new $userModel;
+                                            $userKey = $userInstance->getKeyName();
+                                            $nameColumn = config('creators-ticketing.user_name_column', 'name');
+                                            return $userModel::where($nameColumn, 'like', "%{$search}%")->limit(50)->pluck($nameColumn, $userKey);
+                                        })
+                                        ->getOptionLabelsUsing(function (array $values) use ($userModel) {
+                                            $userInstance = new $userModel;
+                                            $userKey = $userInstance->getKeyName();
+                                            $nameColumn = config('creators-ticketing.user_name_column', 'name');
+                                            return $userModel::whereIn($userKey, $values)->pluck($nameColumn, $userKey);
+                                        })
                                         ->helperText(__('creators-ticketing::resources.automation.conditions.requester_helper')),
                                 
                                     TextInput::make('conditions.created_within_hours')

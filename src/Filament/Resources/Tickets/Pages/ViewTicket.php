@@ -308,14 +308,13 @@ class ViewTicket extends ViewRecord
         $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
         $userInstance = new $userModel;
         $userKey = $userInstance->getKeyName();
-        $pivotUserColumn = "user_{$userKey}";
         
         if ($newAssigneeId) {
             $updateData['assignee_id'] = $newAssigneeId;
         } elseif ($keepCurrentAssignee && $currentAssigneeId) {
             $isAssigneeInNewDept = DB::table(config('creators-ticketing.table_prefix') . 'department_users')
                 ->where('department_id', $newDepartmentId)
-                ->where($pivotUserColumn, $currentAssigneeId)
+                ->where('user_id', $currentAssigneeId)
                 ->exists();
             
             if ($isAssigneeInNewDept) {
@@ -848,15 +847,14 @@ class ViewTicket extends ViewRecord
                                         $departmentId = $this->record->department_id;
                                         $userInstance = new $userModel;
                                         $userKey = $userInstance->getKeyName();
-                                        $pivotUserColumn = "user_{$userKey}";
 
                                         return $userModel::when(
                                             config('creators-ticketing.ticket_assign_scope') === 'department_only' && $departmentId !== null,
-                                            fn ($query) => $query->whereExists(function ($subquery) use ($departmentId, $pivotUserColumn, $userKey) {
+                                            fn ($query) => $query->whereExists(function ($subquery) use ($departmentId, $userKey) {
                                                 $subquery->select(DB::raw(1))
                                                     ->from(config('creators-ticketing.table_prefix') . 'department_users')
                                                     ->whereColumn(
-                                                        config('creators-ticketing.table_prefix') . "department_users.{$pivotUserColumn}",
+                                                        config('creators-ticketing.table_prefix') . "department_users.user_id",
                                                         "users.{$userKey}"
                                                     )
                                                     ->where(config('creators-ticketing.table_prefix') . 'department_users.department_id', $departmentId);
@@ -957,8 +955,18 @@ class ViewTicket extends ViewRecord
                                 return [];
                             }
                             
-                            return $userModel::whereHas(config('creators-ticketing.table_prefix') . 'departments', function ($query) use ($departmentId) {
-                                $query->where('department_id', $departmentId);
+                            $userInstance = new $userModel;
+                            $userKey = $userInstance->getKeyName();
+                            $tablePrefix = config('creators-ticketing.table_prefix');
+                            
+                            return $userModel::whereExists(function ($subquery) use ($departmentId, $userKey, $tablePrefix, $userModel) {
+                                $subquery->select(DB::raw(1))
+                                    ->from($tablePrefix . 'department_users')
+                                    ->whereColumn(
+                                        $tablePrefix . "department_users.user_id",
+                                        (new $userModel)->getTable() . ".{$userKey}"
+                                    )
+                                    ->where($tablePrefix . 'department_users.department_id', $departmentId);
                             })
                             ->where(fn ($query) => $query
                                 ->where('name', 'like', "%{$search}%")
@@ -995,11 +1003,10 @@ class ViewTicket extends ViewRecord
                             $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
                             $userInstance = new $userModel;
                             $userKey = $userInstance->getKeyName();
-                            $pivotUserColumn = "user_{$userKey}";
                             
                             $isInNewDept = DB::table(config('creators-ticketing.table_prefix') . 'department_users')
                                 ->where('department_id', $departmentId)
-                                ->where($pivotUserColumn, $currentAssigneeId)
+                                ->where('user_id', $currentAssigneeId)
                                 ->exists();
                             
                             return $isInNewDept ? $currentAssigneeId : null;
