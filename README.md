@@ -196,6 +196,13 @@ To add the tickets and ticket submission form to your frontend:
 @livewire('creators-ticketing::ticket-submit-form')
 ```
 
+Add the following to your CSS file:
+
+```css
+@import "../../../../vendor/daacreators/creators-ticketing/resources/css/app.css";
+@source '../../../../vendor/daacreators/creators-ticketing/resources/views/**/*';
+```
+
 ## Dashboard Widget
 
 The package includes a ticket statistics widget. Add it to your Filament dashboard:
