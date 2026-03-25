@@ -46,7 +46,7 @@ A robust and dynamic ticketing system plugin for Filament 4, providing a complet
 - Granular permission system
 - Read/Unread status indicators for agents
 - File attachments support
-- **Advanced spam protection system**
+- Advanced spam protection system
 - Responsive design
 - Multi-language support
 - Event system for extensibility
@@ -140,6 +140,19 @@ USER_MODEL="\App\Models\User"
 
 TICKETING_NAV_FIELD=email
 TICKETING_NAV_ALLOWED=admin@demo.com,manager@demo.com
+```
+
+### UUID / ULID / Nanoid user IDs
+
+This package now creates `user_id`, `assignee_id`, and `seen_by` columns using the configured user ID type.
+
+- **UUID**: no extra config needed (default for non-int keys)
+- **ULID**: no extra config needed if your user model uses `HasUlids`
+- **Custom string (e.g. nanoid)**: set the key type + length so foreign keys match your `users.id`
+
+```php
+TICKETING_USER_KEY_TYPE=char
+TICKETING_USER_KEY_LENGTH=21
 ```
 
 ### Navigation Visibility

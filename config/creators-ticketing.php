@@ -22,6 +22,43 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | User ID / Foreign Key Type
+    |--------------------------------------------------------------------------
+    |
+    | By default, this package will infer the user ID type from your user model:
+    | - int/bigint => foreignId (unsignedBigInteger)
+    | - HasUlids   => ULID (char(26))
+    | - otherwise  => UUID
+    |
+    | If your user primary key is a custom string (e.g. nanoid), you should
+    | configure the type and length below so migrations can create matching
+    | foreign keys.
+    |
+    | Supported types: int, bigint, uuid, ulid, string, char
+    |
+    */
+    'user_table' => env('TICKETING_USER_TABLE', null),
+    'user_key' => env('TICKETING_USER_KEY', null),
+
+    'user_key_column' => [
+        'type' => env('TICKETING_USER_KEY_TYPE', null),
+        'length' => env('TICKETING_USER_KEY_LENGTH', null),
+        'collation' => env('TICKETING_USER_KEY_COLLATION', null),
+    ],
+
+    /*
+    | Override user key settings per foreign key column name.
+    |
+    | Example:
+    | 'user_foreign_keys' => [
+    |     'user_id' => ['type' => 'uuid'],
+    |     'assignee_id' => ['type' => 'char', 'length' => 21], // nanoid
+    | ],
+    */
+    'user_foreign_keys' => [],
+
+    /*
+    |--------------------------------------------------------------------------
     | User Name from User Model
     | Default to 'name'
     |--------------------------------------------------------------------------

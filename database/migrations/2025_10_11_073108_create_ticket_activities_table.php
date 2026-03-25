@@ -3,7 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\DB;
+use daacreators\CreatorsTicketing\Support\UserForeignKey;
 
 return new class extends Migration {
     public function up(): void
@@ -15,21 +15,7 @@ return new class extends Migration {
                 ->constrained(config('creators-ticketing.table_prefix') . 'tickets')
                 ->cascadeOnDelete();
 
-            $usersTable = config('creators-ticketing.user_table', 'users');
-
-            $userKey = DB::getSchemaBuilder()
-                ->getColumnListing($usersTable);
-
-            $userPrimaryKey = collect($userKey)->first(fn($c) => in_array(strtolower($c), ['id', 'sqlid', 'user_id'])) ?? 'id';
-
-            $table->unsignedBigInteger('user_id')->nullable();
-
-            if (Schema::hasColumn($usersTable, $userPrimaryKey)) {
-                $table->foreign('user_id')
-                    ->references($userPrimaryKey)
-                    ->on($usersTable)
-                    ->nullOnDelete();
-            }
+            UserForeignKey::add($table, 'user_id', nullable: true, onDelete: 'null');
 
             $table->string('description');
             $table->text('old_value')->nullable();

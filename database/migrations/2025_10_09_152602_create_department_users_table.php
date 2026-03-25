@@ -3,25 +3,16 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use daacreators\CreatorsTicketing\Support\UserForeignKey;
 
 return new class extends Migration {
     public function up(): void {
-        $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
-        $userInstance = new $userModel;
-        $userTable = $userInstance->getTable();
-        $userKey = $userInstance->getKeyName();
-
-        Schema::create(config('creators-ticketing.table_prefix') . 'department_users', function (Blueprint $table) use ($userTable, $userKey) {
+        Schema::create(config('creators-ticketing.table_prefix') . 'department_users', function (Blueprint $table) {
             $table->foreignId('department_id')
                 ->constrained(config('creators-ticketing.table_prefix') . 'departments')
                 ->cascadeOnDelete();
 
-            $table->unsignedBigInteger('user_id');
-
-            $table->foreign('user_id')
-                ->references($userKey)
-                ->on($userTable)
-                ->cascadeOnDelete();
+            UserForeignKey::add($table, 'user_id', nullable: false, onDelete: 'cascade');
 
             $table->primary(['department_id', 'user_id']);
 

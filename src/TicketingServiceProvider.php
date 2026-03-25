@@ -4,8 +4,6 @@ namespace daacreators\CreatorsTicketing;
 
 use Livewire\Livewire;
 use Filament\Support\Assets\Css;
-use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider;
 use Filament\Support\Facades\FilamentAsset;
 use daacreators\CreatorsTicketing\Models\Ticket;
