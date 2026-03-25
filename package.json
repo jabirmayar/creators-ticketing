@@ -1,7 +1,7 @@
 {
     "name": "creators-ticketing",
     "version": "1.2.1",
-    "description": "A robust and dynamic ticketing system for Filament 4.",
+    "description": "A robust and dynamic ticketing system for Filament",
     "private": true,
     "scripts": {
         "dev": "npx @tailwindcss/cli -i ./resources/css/app.css -o ./resources/dist/app.css --watch",

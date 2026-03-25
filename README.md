@@ -1,10 +1,10 @@
-# Creators Ticketing for Filament v4
+# Creators Ticketing for Filament
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/daacreators/creators-ticketing.svg)](https://packagist.org/packages/daacreators/creators-ticketing)
 [![Total Downloads](https://img.shields.io/packagist/dt/daacreators/creators-ticketing.svg)](https://packagist.org/packages/daacreators/creators-ticketing)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE.md)
 
-A robust and dynamic ticketing system plugin for Filament 4, providing a complete helpdesk solution for your Laravel application.
+A robust and dynamic ticketing system plugin for Filament, providing a complete helpdesk solution for your Laravel application.
 
 ---
 
@@ -51,13 +51,13 @@ A robust and dynamic ticketing system plugin for Filament 4, providing a complet
 - Multi-language support
 - Event system for extensibility
 - Automation based on events
-- Seamless integration with Filament 4
+- Seamless integration with Filament
 
 ## Requirements
 
 - PHP 8.2 or higher
 - Laravel 11.x|12.x
-- Filament 4.1.7 or higher
+- Filament 4.1.7|5.1 or higher
 - Livewire 3.x
 
 ## Installation
@@ -214,7 +214,7 @@ Tickets can be managed through the Filament admin panel. You can:
 
 To add the tickets and ticket submission form to your frontend:
 ```blade
-@livewire('creators-ticketing::ticket-submit-form')
+@livewire('creators-ticketing.ticket-submit-form')
 ```
 
 ## Dashboard Widget
@@ -351,6 +351,12 @@ Thank you for considering contributing to Creators Ticketing! You can contribute
 2. Submit feature requests
 3. Submit pull requests
 4. Improve documentation
+
+## Support the Project
+
+If this package saves you time or helps your business, consider supporting its development.
+
+[Support the Project](https://jabirmayar.gumroad.com/coffee)
 
 ## License
 

@@ -133,7 +133,7 @@
 
                 <div class="flex-1 relative flex flex-col overflow-hidden bg-slate-50">
                     <div class="w-full h-full">
-                        @livewire('creators-ticketing::public-ticket-chat', ['ticketId' => $selectedTicket->id], key('chat-'.$selectedTicket->id))
+                        @livewire('creators-ticketing.public-ticket-chat', ['ticketId' => $selectedTicket->id], key('chat-'.$selectedTicket->id))
                     </div>
                 </div>
             </div>

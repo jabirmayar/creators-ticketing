@@ -26,6 +26,7 @@ class TicketingServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // dd('Loaded');
         $this->loadTranslationsFrom(__DIR__ . '/../resources/lang', 'creators-ticketing');
 
         $this->publishes([
@@ -84,18 +85,19 @@ class TicketingServiceProvider extends ServiceProvider
         FilamentAsset::register([
             Css::make('creators-ticketing', __DIR__ . '/../resources/dist/app.css'),
         ], 'daacreators/creators-ticketing');
+        
 
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'creators-ticketing');
 
-        Livewire::component('creators-ticketing::ticket-submit-form', TicketSubmitForm::class);
+        Livewire::component('creators-ticketing.ticket-submit-form', TicketSubmitForm::class);
 
-        Livewire::component('creators-ticketing::public-ticket-chat', PublicTicketChat::class);
-        
-        Livewire::component('creators-ticketing::ticket-chat-messages', TicketChatMessages::class);
+        Livewire::component('creators-ticketing.public-ticket-chat', PublicTicketChat::class);
 
-        Livewire::component('creators-ticketing::ticket-attachments-display', TicketAttachmentsDisplay::class);
+        Livewire::component('creators-ticketing.ticket-chat-messages', TicketChatMessages::class);
 
-        Livewire::component('creators-ticketing::ticket-timeline', TicketTimeline::class);
+        Livewire::component('creators-ticketing.ticket-attachments-display', TicketAttachmentsDisplay::class);
+
+        Livewire::component('creators-ticketing.ticket-timeline', TicketTimeline::class);
 
         Livewire::component('creators-ticketing.filament.widgets.ticket-stats-widget', TicketStatsWidget::class);
         
