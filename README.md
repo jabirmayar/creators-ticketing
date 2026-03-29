@@ -343,6 +343,8 @@ The package includes built-in security features:
 - Permission-based access control
 - Department-level agent restrictions
 
+Note: attachments require `storage/app/private` to be writable by the PHP process. On some hosts (WSL/Docker/NFS bind mounts), permission changes like `chmod` may be denied; the package will continue to boot, but you must ensure correct ownership/permissions from the host.
+
 ## Contributing
 
 Thank you for considering contributing to Creators Ticketing! You can contribute in the following ways:

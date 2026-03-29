@@ -73,11 +73,13 @@ class TicketingServiceProvider extends ServiceProvider
     {
         $directory = storage_path('app/private/ticket-attachments');
 
-        if (!file_exists($directory)) {
-            mkdir($directory, 0755, true);
+        if (!is_dir($directory)) {
+            @mkdir($directory, 0755, true);
         }
 
-        chmod($directory, 0755);
+        if (is_dir($directory)) {
+            @chmod($directory, 0755);
+        }
     }
 
     protected function registerLivewireComponent(): void
