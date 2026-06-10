@@ -12,7 +12,7 @@
     "require": {
         "php": "^8.2",
         "filament/filament": "^4.1|^5.1",
-        "illuminate/contracts": "^11.28|^12.0"
+        "illuminate/contracts": "^11.28|^12.0|^13.0"
     },
     "autoload": {
         "psr-4": {
