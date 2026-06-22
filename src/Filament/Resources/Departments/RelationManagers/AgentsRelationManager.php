@@ -21,6 +21,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Resources\RelationManagers\RelationManager;
 use daacreators\CreatorsTicketing\Support\UserNameResolver;
+use daacreators\CreatorsTicketing\Support\AssigneeFilter;
 
 class AgentsRelationManager extends RelationManager
 {
@@ -128,14 +129,18 @@ class AgentsRelationManager extends RelationManager
                                     $userKey = $userInstance->getKeyName();
                                     
                                     $nameColumn = config('creators-ticketing.user_name_column', 'name');
-                                    return $userModel::query()
-                                        ->where($nameColumn, 'like', "%{$search}%")
-                                        ->orWhere('email', 'like', "%{$search}%")
-                                        ->limit(50)
-                                        ->get()
-                                        ->mapWithKeys(fn ($user) => [
-                                            $user->{$userKey} => UserNameResolver::resolve($user) . ' - ' . $user->email,
-                                        ]);
+                                    return AssigneeFilter::apply(
+                                        $userModel::query()
+                                            ->where(function ($query) use ($nameColumn, $search) {
+                                                $query->where($nameColumn, 'like', "%{$search}%")
+                                                    ->orWhere('email', 'like', "%{$search}%");
+                                            })
+                                            ->limit(50)
+                                    )
+                                    ->get()
+                                    ->mapWithKeys(fn ($user) => [
+                                        $user->{$userKey} => UserNameResolver::resolve($user) . ' - ' . $user->email,
+                                    ]);
                                 })
                                 ->getOptionLabelsUsing(function (array $values) use ($userModel) {
                                     $userInstance = new $userModel;  

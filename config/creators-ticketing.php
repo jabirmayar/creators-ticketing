@@ -105,6 +105,29 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Assignee Filter
+    |--------------------------------------------------------------------------
+    |
+    | Restrict which users appear in assignee dropdowns by matching a column
+    | on your users table against allowed values.
+    |
+    | Examples:
+    |   TICKETING_ASSIGNEE_FILTER_COLUMN=type
+    |   TICKETING_ASSIGNEE_FILTER_VALUES=admin,support,manager
+    |
+    |   TICKETING_ASSIGNEE_FILTER_COLUMN=role
+    |   TICKETING_ASSIGNEE_FILTER_VALUES=agent,supervisor
+    |
+    | Leave both unset to show all users (default).
+    |
+    */
+    'assignee_filter_column' => env('TICKETING_ASSIGNEE_FILTER_COLUMN'),
+    'assignee_filter_values' => env('TICKETING_ASSIGNEE_FILTER_VALUES') 
+        ? array_map('trim', explode(',', env('TICKETING_ASSIGNEE_FILTER_VALUES'))) 
+        : null,
+
+    /*
+    |--------------------------------------------------------------------------
     | Ticket Creation Limits
     |--------------------------------------------------------------------------
     |

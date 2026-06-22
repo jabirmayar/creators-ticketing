@@ -45,6 +45,7 @@ use daacreators\CreatorsTicketing\Models\Department;
 use daacreators\CreatorsTicketing\Enums\TicketPriority;
 use Filament\Infolists\Components\Section as InfoSection;
 use daacreators\CreatorsTicketing\Support\UserNameResolver;
+use daacreators\CreatorsTicketing\Support\AssigneeFilter;
 use daacreators\CreatorsTicketing\Traits\HasTicketingNavGroup;
 use daacreators\CreatorsTicketing\Traits\HasTicketPermissions;
 use daacreators\CreatorsTicketing\Filament\Resources\Tickets\Pages;
@@ -265,11 +266,14 @@ class TicketResource extends Resource
                             ->searchable()
                             ->getSearchResultsUsing(function (string $search) use ($userModel) {
                                 $nameColumn = config('creators-ticketing.user_name_column', 'name');
-                                return $userModel::where($nameColumn, 'like', "%{$search}%")
-                                    ->orWhere('email', 'like', "%{$search}%")
-                                    ->limit(50)
-                                    ->get()
-                                    ->mapWithKeys(fn($user) => [$user->getKey() => UserNameResolver::resolve($user) . ' - ' . $user->email]);
+                                return AssigneeFilter::apply(
+                                    $userModel::where(function ($query) use ($nameColumn, $search) {
+                                        $query->where($nameColumn, 'like', "%{$search}%")
+                                            ->orWhere('email', 'like', "%{$search}%");
+                                    })->limit(50)
+                                )
+                                ->get()
+                                ->mapWithKeys(fn($user) => [$user->getKey() => UserNameResolver::resolve($user) . ' - ' . $user->email]);
                             })
                            ->getOptionLabelUsing(function ($value) use ($userModel): ?string {
                                 $user = $userModel::find($value);
@@ -784,23 +788,25 @@ class TicketResource extends Resource
                                         $userInstance = new $userModel;
                                         $userKey = $userInstance->getKeyName();
 
-                                        return $userModel::when(
-                                            config('creators-ticketing.ticket_assign_scope') === 'department_only' && $departmentId !== null,
-                                            fn ($query) => $query->whereExists(function ($subquery) use ($departmentId, $userKey) {
-                                                $subquery->select(DB::raw(1))
-                                                    ->from(config('creators-ticketing.table_prefix') . 'department_users')
-                                                    ->whereColumn(
-                                                        config('creators-ticketing.table_prefix') . "department_users.user_id",
-                                                        "users.{$userKey}"
-                                                    )
-                                                    ->where(config('creators-ticketing.table_prefix') . 'department_users.department_id', $departmentId);
+                                        return AssigneeFilter::apply(
+                                            $userModel::when(
+                                                config('creators-ticketing.ticket_assign_scope') === 'department_only' && $departmentId !== null,
+                                                fn ($query) => $query->whereExists(function ($subquery) use ($departmentId, $userKey) {
+                                                    $subquery->select(DB::raw(1))
+                                                        ->from(config('creators-ticketing.table_prefix') . 'department_users')
+                                                        ->whereColumn(
+                                                            config('creators-ticketing.table_prefix') . "department_users.user_id",
+                                                            "users.{$userKey}"
+                                                        )
+                                                        ->where(config('creators-ticketing.table_prefix') . 'department_users.department_id', $departmentId);
+                                                })
+                                            )
+                                            ->where(function ($query) use ($search) {
+                                                $nameColumn = config('creators-ticketing.user_name_column', 'name');
+                                                $query->where($nameColumn, 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%");
                                             })
+                                            ->limit(50)
                                         )
-                                        ->where(function ($query) use ($search) {
-                                            $nameColumn = config('creators-ticketing.user_name_column', 'name');
-                                            $query->where($nameColumn, 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%");
-                                        })
-                                        ->limit(50)
                                         ->get()
                                         ->mapWithKeys(fn($user) => [$user->getKey() => UserNameResolver::resolve($user) . ' - ' . $user->email]);
                                     })
@@ -812,10 +818,15 @@ class TicketResource extends Resource
                                         if (config('creators-ticketing.ticket_assign_scope') === 'department_only') {
                                             $departmentId = $component->getContainer()->getRecord()?->department_id;
                                             if ($departmentId) {
-                                                return Department::find($departmentId)?->agents->mapWithKeys(fn($user) => [$user->getKey() => UserNameResolver::resolve($user) . ' - ' . $user->email])->toArray() ?? [];
+                                                $agents = Department::find($departmentId)?->agents ?? collect();
+                                                return AssigneeFilter::apply($agents->toQuery())
+                                                    ->get()
+                                                    ->mapWithKeys(fn($user) => [$user->getKey() => UserNameResolver::resolve($user) . ' - ' . $user->email])
+                                                    ->toArray();
                                             }
                                         }
-                                        return $userModel::limit(50)
+                                        return AssigneeFilter::apply($userModel::query())
+                                            ->limit(50)
                                             ->get()
                                             ->mapWithKeys(fn($user) => [$user->getKey() => UserNameResolver::resolve($user) . ' - ' . $user->email])
                                             ->toArray();
@@ -829,9 +840,12 @@ class TicketResource extends Resource
                                 ->searchable()
                                 ->getSearchResultsUsing(function (string $search) use ($userModel) {
                                     $nameColumn = config('creators-ticketing.user_name_column', 'name');
-                                    return $userModel::where($nameColumn, 'like', "%{$search}%")
-                                    ->orWhere('email', 'like', "%{$search}%")
-                                    ->limit(50)
+                                    return AssigneeFilter::apply(
+                                        $userModel::where(function ($query) use ($nameColumn, $search) {
+                                            $query->where($nameColumn, 'like', "%{$search}%")
+                                                ->orWhere('email', 'like', "%{$search}%");
+                                        })->limit(50)
+                                    )
                                     ->get()
                                     ->mapWithKeys(fn($user) => [$user->getKey() => UserNameResolver::resolve($user) . ' - ' . $user->email]);
                                 })

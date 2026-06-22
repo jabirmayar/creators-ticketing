@@ -848,23 +848,25 @@ class ViewTicket extends ViewRecord
                                         $userInstance = new $userModel;
                                         $userKey = $userInstance->getKeyName();
 
-                                        return $userModel::when(
-                                            config('creators-ticketing.ticket_assign_scope') === 'department_only' && $departmentId !== null,
-                                            fn ($query) => $query->whereExists(function ($subquery) use ($departmentId, $userKey) {
-                                                $subquery->select(DB::raw(1))
-                                                    ->from(config('creators-ticketing.table_prefix') . 'department_users')
-                                                    ->whereColumn(
-                                                        config('creators-ticketing.table_prefix') . "department_users.user_id",
-                                                        "users.{$userKey}"
-                                                    )
-                                                    ->where(config('creators-ticketing.table_prefix') . 'department_users.department_id', $departmentId);
+                                        return \daacreators\CreatorsTicketing\Support\AssigneeFilter::apply(
+                                            $userModel::when(
+                                                config('creators-ticketing.ticket_assign_scope') === 'department_only' && $departmentId !== null,
+                                                fn ($query) => $query->whereExists(function ($subquery) use ($departmentId, $userKey) {
+                                                    $subquery->select(DB::raw(1))
+                                                        ->from(config('creators-ticketing.table_prefix') . 'department_users')
+                                                        ->whereColumn(
+                                                            config('creators-ticketing.table_prefix') . "department_users.user_id",
+                                                            "users.{$userKey}"
+                                                        )
+                                                        ->where(config('creators-ticketing.table_prefix') . 'department_users.department_id', $departmentId);
+                                                })
+                                            )
+                                            ->where(function ($query) use ($search) {
+                                                $nameColumn = config('creators-ticketing.user_name_column', 'name');
+                                                $query->where($nameColumn, 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%");
                                             })
+                                            ->limit(50)
                                         )
-                                        ->where(function ($query) use ($search) {
-                                            $nameColumn = config('creators-ticketing.user_name_column', 'name');
-                                            $query->where($nameColumn, 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%");
-                                        })
-                                        ->limit(50)
                                         ->get()
                                         ->mapWithKeys(fn($user) => [$user->getKey() => UserNameResolver::resolve($user) . ' - ' . $user->email]);
                                     })
@@ -878,10 +880,15 @@ class ViewTicket extends ViewRecord
                                         if (config('creators-ticketing.ticket_assign_scope') === 'department_only') {
                                             $departmentId = $this->record->department_id;
                                             if ($departmentId) {
-                                                return Department::find($departmentId)?->agents->mapWithKeys(fn($user) => [$user->getKey() => UserNameResolver::resolve($user) . ' - ' . $user->email])->toArray() ?? [];
+                                                $agents = Department::find($departmentId)?->agents ?? collect();
+                                                return \daacreators\CreatorsTicketing\Support\AssigneeFilter::apply($agents->toQuery())
+                                                    ->get()
+                                                    ->mapWithKeys(fn($user) => [$user->getKey() => UserNameResolver::resolve($user) . ' - ' . $user->email])
+                                                    ->toArray();
                                             }
                                         }
-                                        return $userModel::limit(50)
+                                        return \daacreators\CreatorsTicketing\Support\AssigneeFilter::apply($userModel::query())
+                                            ->limit(50)
                                             ->get()
                                             ->mapWithKeys(fn($user) => [$user->getKey() => UserNameResolver::resolve($user) . ' - ' . $user->email])
                                             ->toArray();
@@ -897,11 +904,14 @@ class ViewTicket extends ViewRecord
                                     ->getSearchResultsUsing(function (string $search) {
                                         $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
                                         $nameColumn = config('creators-ticketing.user_name_column', 'name');
-                                        return $userModel::where($nameColumn, 'like', "%{$search}%")
-                                            ->orWhere('email', 'like', "%{$search}%")
-                                            ->limit(50)
-                                            ->get()
-                                            ->mapWithKeys(fn($user) => [$user->getKey() => UserNameResolver::resolve($user) . ' - ' . $user->email]);
+                                        return \daacreators\CreatorsTicketing\Support\AssigneeFilter::apply(
+                                            $userModel::where(function ($query) use ($nameColumn, $search) {
+                                                $query->where($nameColumn, 'like', "%{$search}%")
+                                                    ->orWhere('email', 'like', "%{$search}%");
+                                            })->limit(50)
+                                        )
+                                        ->get()
+                                        ->mapWithKeys(fn($user) => [$user->getKey() => UserNameResolver::resolve($user) . ' - ' . $user->email]);
                                     })
                                     ->getOptionLabelUsing(function ($value) {
                                         $userModel = config('creators-ticketing.user_model', \App\Models\User::class);
