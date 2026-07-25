@@ -54,6 +54,11 @@ class AutomationRuleResource extends Resource
         return __('creators-ticketing::resources.automation.nav_label');
     }
 
+    public static function getCluster(): ?string
+    {
+        return config('creators-ticketing.cluster') ?? static::$cluster;
+    }
+
    public static function canViewAny(): bool
     {
         return static::userCan('can_manage_automations');
