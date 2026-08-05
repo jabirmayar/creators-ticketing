@@ -41,6 +41,11 @@ class DepartmentResource extends Resource
         return __('creators-ticketing::resources.department.title');
     }
 
+    public static function getCluster(): ?string
+    {
+        return config('creators-ticketing.cluster') ?? static::$cluster;
+    }
+
     public static function getModelLabel(): string
     {
         return __('creators-ticketing::resources.department.label');

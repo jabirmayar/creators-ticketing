@@ -33,6 +33,11 @@ class SpamLogResource extends Resource
         return __('creators-ticketing::resources.spam_log.title');
     }
 
+    public static function getCluster(): ?string
+    {
+        return config('creators-ticketing.cluster') ?? static::$cluster;
+    }
+
     public static function canViewAny(): bool
     {
         return static::userCan('can_view_spam_logs');
