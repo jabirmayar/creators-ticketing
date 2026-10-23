@@ -190,6 +190,30 @@
                                     <form wire:submit.prevent="submit" class="max-w-4xl mx-auto">
                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                             
+                                            {{-- Guest fields (only shown when guest mode is active) --}}
+                                            @if($this->isGuestMode())
+                                                <div class="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-blue-50 rounded-xl border border-blue-200">
+                                                    <div>
+                                                        <label class="block text-sm font-semibold text-gray-900 mb-2">
+                                                            {{ __('creators-ticketing::resources.frontend.guest_name') }} <span class="text-red-500">*</span>
+                                                        </label>
+                                                        <input type="text" wire:model="guest_name"
+                                                            class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2.5"
+                                                            placeholder="{{ __('creators-ticketing::resources.frontend.guest_name_placeholder') }}">
+                                                        @error('guest_name') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-sm font-semibold text-gray-900 mb-2">
+                                                            {{ __('creators-ticketing::resources.frontend.guest_email') }} <span class="text-red-500">*</span>
+                                                        </label>
+                                                        <input type="email" wire:model="guest_email"
+                                                            class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2.5"
+                                                            placeholder="{{ __('creators-ticketing::resources.frontend.guest_email_placeholder') }}">
+                                                        @error('guest_email') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                                    </div>
+                                                </div>
+                                            @endif
+
                                             {{-- Department & Category --}}
                                             <div class="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-gray-50 rounded-xl border border-gray-200">
                                                 <div class="{{ count($available_forms) > 1 ? 'col-span-1' : 'col-span-1 md:col-span-2 max-w-md mx-auto w-full' }}">
@@ -461,6 +485,52 @@
                                             @endif
                                         </div>
                                     </form>
+                                </div>
+                            @elseif($guestTrackingUrl)
+                                {{-- Guest submission success / tracking link --}}
+                                <div wire:key="guest-success" class="text-center py-12 px-4">
+                                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-50 mb-6">
+                                        <svg class="h-8 w-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                    </div>
+                                    <h3 class="text-xl font-bold text-gray-900">{{ __('creators-ticketing::resources.frontend.guest_success_title') }}</h3>
+                                    <p class="mt-2 text-sm text-gray-500 max-w-sm mx-auto">{{ __('creators-ticketing::resources.frontend.guest_success_desc') }}</p>
+
+                                    <div class="mt-8 bg-amber-50 border border-amber-200 rounded-xl p-5 max-w-lg mx-auto text-left">
+                                        <p class="text-sm font-semibold text-amber-800 mb-2">
+                                            {{ __('creators-ticketing::resources.frontend.guest_save_link_label') }}
+                                        </p>
+                                        <div class="flex items-center gap-2">
+                                            <code class="flex-1 text-xs font-mono bg-white border border-amber-200 rounded-lg px-3 py-2 text-amber-900 break-all">
+                                                {{ $guestTrackingUrl }}
+                                            </code>
+                                            <button type="button"
+                                                onclick="navigator.clipboard.writeText('{{ $guestTrackingUrl }}').then(() => this.textContent = '✓').catch(() => {})"
+                                                class="flex-shrink-0 px-3 py-2 bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs font-semibold rounded-lg transition">
+                                                {{ __('creators-ticketing::resources.frontend.copy') }}
+                                            </button>
+                                        </div>
+                                        <p class="mt-2 text-xs text-amber-700">{{ __('creators-ticketing::resources.frontend.guest_save_link_reminder') }}</p>
+                                    </div>
+
+                                    <div class="mt-8">
+                                        <a href="{{ $guestTrackingUrl }}"
+                                           class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white text-sm font-bold rounded-xl hover:bg-blue-700 transition">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                            </svg>
+                                            {{ __('creators-ticketing::resources.frontend.guest_view_ticket') }}
+                                        </a>
+                                    </div>
+
+                                    <div class="mt-4">
+                                        <button wire:click="showNewTicketForm" type="button"
+                                            class="text-sm text-blue-600 hover:underline">
+                                            {{ __('creators-ticketing::resources.frontend.submit_another') }}
+                                        </button>
+                                    </div>
                                 </div>
                             @else
                                 {{-- Ticket List View --}}

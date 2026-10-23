@@ -122,6 +122,14 @@ The seeder uses `updateOrCreate` to prevent duplicates, so you can safely run it
 
 ## Upgrading
 
+### Upgrading to v1.3.0
+
+Run `php artisan migrate` to add the guest fields and make ticket/reply requester IDs nullable, then run `php artisan filament:assets` and `php artisan optimize:clear`. The public page, guest submission, and customer emails are all opt-in; see the public support setup below. Existing embedded forms and authenticated ticket ownership remain supported.
+
+The guest migrations preserve existing requester IDs and foreign-key actions. They support MySQL/MariaDB, PostgreSQL, and SQLite. Back up your database before upgrading. Rolling back is blocked while affected tables contain records with a null `user_id`; assign those records to users or archive them before rollback.
+
+Public submission now validates that the department is active/public and that the form is active and attached to that department. Only configured form fields are persisted. Custom integrations that submitted other fields or modified server-controlled Livewire state must be updated. Public chat rejects closed tickets and escapes customer input; unsafe HTML is sanitized when displaying replies. `TicketCreated` is dispatched once per creation instead of twice from the embedded form.
+
 ### Upgrading from v1.1.8 to v1.1.9
 **⚠️ Important:** Version v1.1.9 and introduces new fields to the database table. If you are upgrading from a previous version, you **must** run the migrations after updating the package to ensure the system functions correctly:
 ```bash
@@ -187,6 +195,47 @@ php artisan vendor:publish --tag="creators-ticketing-translations"
 ```
 
 ## Usage
+
+### Public Support Page and Customer Emails
+
+Customers can submit and follow a ticket **without creating an account**. Enable the public page, guest submissions, and customer email notifications in your application's `.env`:
+
+```dotenv
+TICKETING_PUBLIC_PAGE_ENABLED=true
+TICKETING_ALLOW_GUEST_TICKETS=true
+TICKETING_CUSTOMER_EMAILS_ENABLED=true
+TICKETING_PUBLIC_PATH=support
+```
+
+Run the package migrations (including the guest ticket migrations) and publish the frontend CSS:
+
+```bash
+php artisan migrate
+php artisan filament:assets
+php artisan optimize:clear
+```
+
+Create an active public department, attach an active form, and seed the ticket statuses as described above. Visit **`/support`** for the customer submission page. The package supplies its own layout with Livewire and CSS; no application layout or login route is required for guests. Existing applications can continue embedding `<livewire:creators-ticketing.ticket-submit-form />`.
+
+After submission, a customer sees a private `/tickets/track/{token}` link and receives a confirmation email containing the same link. Public staff replies also send an email with the reply text and ticket link. Customers use the link to view the conversation and reply in their browser. Internal notes and customer-authored replies do not send customer emails. Registered customers receive links to their own tickets on the support page and must be authenticated to access them.
+
+Configure Laravel's mail transport and `MAIL_FROM_ADDRESS` before enabling emails. Notifications use Laravel's configured queue connection and are dispatched after database transactions commit. For an asynchronous queue such as `database` or `redis`, run a worker:
+
+```bash
+php artisan queue:work
+```
+
+The `sync` queue connection sends during the request. Failed asynchronous deliveries use Laravel's normal failed-job/retry handling. A synchronous mail or enqueue failure is reported without rejecting an already saved ticket. Use the `log` mailer for local previews. Email delivery to a real inbox requires a working mail transport.
+
+The public support page, guest submission, and customer emails are all disabled by default. The `/support` route is only registered when `TICKETING_PUBLIC_PAGE_ENABLED=true`, so existing application routes remain unaffected by default. Tracking links for existing guest tickets remain available when the public page is disabled. If you supply your own layout, set `guest_layout` in `config/creators-ticketing.php` to your Blade layout name and include Livewire assets and the package CSS. When the public page is disabled, registered customer notifications omit the support-page action. After changing the public page setting or path, clear cached configuration and routes with `php artisan optimize:clear`.
+
+Treat tracking links as passwords: anyone with a link can view and reply to that ticket. Changing or clearing its `guest_token` revokes access, including already open chats. Guests cannot browse other tickets by ID or use the authenticated private attachment endpoint. Guest replies accept plain text, enforce rate limits, and reject closed tickets. **Replying directly to an email is not supported**; inbound email handling is a separate integration.
+
+The included host-application regression tests cover guest and authenticated submission, email contents and recipients, internal-note isolation, token authorization and revocation, validation, rate limits, and upgrade/rollback behavior. See [tests/README.md](tests/README.md) for setup:
+
+```bash
+php artisan test --filter=CreatorsTicketing
+```
 
 ### Creating Forms
 

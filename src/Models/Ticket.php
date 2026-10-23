@@ -21,6 +21,21 @@ class Ticket extends Model
         'seen_at' => 'datetime',
     ];
 
+    /** Returns true when this ticket was submitted without a user account. */
+    public function isGuestTicket(): bool
+    {
+        return is_null($this->user_id) && !is_null($this->guest_token);
+    }
+
+    /** The display name for the requester (works for both guests and users). */
+    public function getRequesterNameAttribute(): string
+    {
+        if ($this->isGuestTicket()) {
+            return $this->guest_name ?? $this->guest_email ?? 'Guest';
+        }
+        return \daacreators\CreatorsTicketing\Support\UserNameResolver::resolve($this->requester) ?? 'Unknown';
+    }
+
     protected static function boot()
     {
         parent::boot();
@@ -86,6 +101,11 @@ class Ticket extends Model
 
     public function markSeenBy($userId): void
     {
+        // For guest tickets there's no user_id — treat as already owned
+        if ($this->isGuestTicket()) {
+            return;
+        }
+
         if ($userId == $this->user_id) {
             return;
         }

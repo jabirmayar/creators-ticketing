@@ -34,6 +34,11 @@ class TicketReply extends Model
 
     public function markSeenBy($userId): void
     {
+        // Anonymous viewers cannot mark replies as seen; agents can mark guest replies.
+        if (is_null($userId)) {
+            return;
+        }
+
         if ($userId == $this->user_id) {
             return;
         }

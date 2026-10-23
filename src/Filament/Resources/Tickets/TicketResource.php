@@ -57,7 +57,7 @@ class TicketResource extends Resource
     use HasTicketPermissions, HasTicketingNavGroup;
 
     protected static ?string $model = Ticket::class;
-    
+
     protected static BackedEnum|string|null $navigationIcon = 'heroicon-o-ticket';
 
     public static function getNavigationLabel(): string
@@ -91,17 +91,17 @@ class TicketResource extends Resource
     public static function canCreate(): bool
     {
         $permissions = (new static)->getUserPermissions();
-        
+
         if ($permissions['is_admin']) {
             return true;
         }
-        
+
         foreach ($permissions['permissions'] as $deptPerms) {
             if ($deptPerms['can_create_tickets']) {
                 return true;
             }
         }
-        
+
         return false;
     }
 
@@ -167,13 +167,13 @@ class TicketResource extends Resource
                             ->label(__('creators-ticketing::resources.ticket.department'))
                             ->relationship('department', 'name', function ($query) use ($permissions) {
                                 $query->where('is_active', true);
-                                
+
                                 if (!$permissions['is_admin'] && !empty($permissions['departments'])) {
                                     $departmentsWithCreatePermission = collect($permissions['permissions'])
                                         ->filter(fn($perm) => $perm['can_create_tickets'] ?? false)
                                         ->keys()
                                         ->toArray();
-                                    
+
                                     if (!empty($departmentsWithCreatePermission)) {
                                         $query->whereIn('id', $departmentsWithCreatePermission);
                                     }
@@ -186,27 +186,27 @@ class TicketResource extends Resource
                                 $set('form_id', null);
                                 $set('custom_fields', []);
                             }),
-                        
+
                         Select::make('form_id')
                             ->label(__('creators-ticketing::resources.ticket.form_label') ?? 'Ticket Form')
                             ->options(function (Get $get) {
                                 $departmentId = $get('department_id');
                                 if (!$departmentId) return [];
-                                
+
                                 $department = Department::find($departmentId);
                                 if (!$department) return [];
 
                                 $table = (new Form)->getTable();
-                                
+
                                 return $department->forms()
                                     ->where($table . '.is_active', true)
                                     ->pluck($table . '.name', $table . '.id')
                                     ->toArray();
                             })
                             ->required(fn(Get $get) => !empty(Department::find($get('department_id'))?->forms()->exists()))
-                            ->visible(fn (Get $get, ?Model $record) => 
-                                ($record === null || $record->form_id === null) && 
-                                $get('department_id') !== null && 
+                            ->visible(fn (Get $get, ?Model $record) =>
+                                ($record === null || $record->form_id === null) &&
+                                $get('department_id') !== null &&
                                 Department::find($get('department_id'))?->forms()->count() > 1
                             )
                             ->live()
@@ -224,16 +224,16 @@ class TicketResource extends Resource
                                     ->first()
                                     ?->id;
                             }),
-                        
+
                         Group::make()
                             ->schema(fn (Get $get, ?Model $record): array => static::getDynamicFormFields($record, $get('department_id'), $get('form_id'), $permissions))
-                            ->visible(fn (?Model $record, Get $get) => 
+                            ->visible(fn (?Model $record, Get $get) =>
                                 $record !== null || $get('department_id') !== null
                             )
                             ->columnSpanFull(),
                     ]),
             ])->columnSpan(2),
-            
+
             Group::make()->schema([
                 Section::make(__('creators-ticketing::resources.ticket.properties'))
                     ->schema([
@@ -254,13 +254,13 @@ class TicketResource extends Resource
                                 $user = $userModel::find($value);
                                 return $user ? UserNameResolver::resolve($user) . ' - ' . $user->email : null;
                             })
-                            ->visible(fn (?Model $record) => 
-                                $permissions['is_admin'] || 
+                            ->visible(fn (?Model $record) =>
+                                $permissions['is_admin'] ||
                                 ($record === null && !empty(collect($permissions['permissions'])->filter(fn($p) => $p['can_assign_tickets'] ?? false))) ||
                                 ($record instanceof Ticket && in_array($record->department_id, $permissions['departments']) && ($permissions['permissions'][$record->department_id]['can_assign_tickets'] ?? false))
                             )
                             ->disabled(fn (?Model $record) => $record instanceof Ticket && !$permissions['is_admin']),
-                        
+
                         Select::make('assignee_id')
                             ->label(__('creators-ticketing::resources.ticket.assignee'))
                             ->searchable()
@@ -281,50 +281,50 @@ class TicketResource extends Resource
                             })
                             ->preload(false)
                             ->native(false)
-                            ->visible(fn (?Model $record, Get $get) => 
-                                $permissions['is_admin'] || 
+                            ->visible(fn (?Model $record, Get $get) =>
+                                $permissions['is_admin'] ||
                                 ($record === null && $get('department_id') && ($permissions['permissions'][$get('department_id')]['can_assign_tickets'] ?? false)) ||
                                 ($record instanceof Ticket && in_array($record->department_id, $permissions['departments']) && ($permissions['permissions'][$record->department_id]['can_assign_tickets'] ?? false))
                             )
-                            ->disabled(fn (?Model $record, Get $get) => 
-                                $record instanceof Ticket && !$permissions['is_admin'] && 
+                            ->disabled(fn (?Model $record, Get $get) =>
+                                $record instanceof Ticket && !$permissions['is_admin'] &&
                                 !($record->department && in_array($record->department_id, $permissions['departments']) && ($permissions['permissions'][$record->department_id]['can_assign_tickets'] ?? false))
                             ),
-                        
+
                         Select::make('department_id')
                             ->relationship('department', 'name')
                             ->required()
-                            ->visible(fn (?Model $record) => 
+                            ->visible(fn (?Model $record) =>
                                 $record !== null && $permissions['is_admin']
                             )
                             ->disabled(fn (?Model $record) => $record instanceof Ticket && !$permissions['is_admin']),
-                        
+
                         Select::make('ticket_status_id')
                             ->label(__('creators-ticketing::resources.ticket.status'))
                             ->relationship('status', 'name')
-                            ->visible(fn (?Model $record, Get $get) => 
-                                $permissions['is_admin'] || 
+                            ->visible(fn (?Model $record, Get $get) =>
+                                $permissions['is_admin'] ||
                                 ($record === null && $get('department_id') && ($permissions['permissions'][$get('department_id')]['can_change_status'] ?? false)) ||
                                 ($record instanceof Ticket && in_array($record->department_id, $permissions['departments']) && ($permissions['permissions'][$record->department_id]['can_change_status'] ?? false))
                             )
-                            ->disabled(fn (?Model $record, Get $get) => 
-                                $record instanceof Ticket && !$permissions['is_admin'] && 
+                            ->disabled(fn (?Model $record, Get $get) =>
+                                $record instanceof Ticket && !$permissions['is_admin'] &&
                                 !($record->department && in_array($record->department_id, $permissions['departments']) && ($permissions['permissions'][$record->department_id]['can_change_status'] ?? false))
                             ),
-                        
+
                         Select::make('priority')
                             ->label(__('creators-ticketing::resources.ticket.priority'))
                             ->options(TicketPriority::class)
                             ->enum(TicketPriority::class)
                             ->required()
                             ->default(TicketPriority::LOW)
-                            ->visible(fn (?Model $record, Get $get) => 
-                                $permissions['is_admin'] || 
+                            ->visible(fn (?Model $record, Get $get) =>
+                                $permissions['is_admin'] ||
                                 ($record === null && $get('department_id') && ($permissions['permissions'][$get('department_id')]['can_change_priority'] ?? false)) ||
                                 ($record instanceof Ticket && in_array($record->department_id, $permissions['departments']) && ($permissions['permissions'][$record->department_id]['can_change_priority'] ?? false))
                             )
-                            ->disabled(fn (?Model $record, Get $get) => 
-                                $record instanceof Ticket && !$permissions['is_admin'] && 
+                            ->disabled(fn (?Model $record, Get $get) =>
+                                $record instanceof Ticket && !$permissions['is_admin'] &&
                                 !($record->department && in_array($record->department_id, $permissions['departments']) && ($permissions['permissions'][$record->department_id]['can_change_priority'] ?? false))
                             ),
                     ]),
@@ -335,7 +335,7 @@ class TicketResource extends Resource
     protected static function getDynamicFormFields(?Model $record, $departmentId, $formId, $permissions): array
     {
         $user = Filament::auth()->user();
-        
+
         if (!$departmentId) {
             $departmentId = $record?->department_id;
         }
@@ -357,8 +357,8 @@ class TicketResource extends Resource
         elseif ($record instanceof Ticket) {
              if (isset($record->form_id)) {
                  $form = Form::with('fields')->find($record->form_id);
-             } 
-             
+             }
+
              if (!$form) {
                 $form = $department->forms()->with('fields')->first();
              }
@@ -386,8 +386,8 @@ class TicketResource extends Resource
         }
 
         $fields = [];
-        $isDisabled = $record instanceof Ticket && !$permissions['is_admin'] && 
-                      $record->user_id !== $user->getKey() && 
+        $isDisabled = $record instanceof Ticket && !$permissions['is_admin'] &&
+                      $record->user_id !== $user->getKey() &&
                       !in_array($record->department_id, $permissions['departments']);
 
         foreach ($form->fields as $field) {
@@ -458,12 +458,12 @@ class TicketResource extends Resource
                         ->columnSpanFull()
                         ->downloadable()
                         ->openable()
-                        ->disk('private') 
-                        ->visibility('private') 
+                        ->disk('private')
+                        ->visibility('private')
                         ->preserveFilenames()
-                        ->directory(fn ($record) => $record 
-                            ? "ticket-attachments/{$record->getKey()}" 
-                            : "ticket-attachments/temp" 
+                        ->directory(fn ($record) => $record
+                            ? "ticket-attachments/{$record->getKey()}"
+                            : "ticket-attachments/temp"
                         );
 
                     if ($field->type === 'file_multiple') {
@@ -484,11 +484,11 @@ class TicketResource extends Resource
                             }
                         }
                     }
-                    
+
                     if (empty($customRules)) {
                         $customRules[] = 'max:5120';
                     }
-                    
+
                     $fieldComponent->rules($customRules);
                     break;
             }
@@ -509,55 +509,59 @@ class TicketResource extends Resource
                     ->schema([
                         TextEntry::make('ticket_uid')
                             ->label(__('creators-ticketing::resources.ticket.ticket_id')),
-                        
+
                         TextEntry::make('title'),
-                        
+
                         TextEntry::make('content')
                             ->html()
                             ->columnSpanFull(),
-                        
+
                         TextEntry::make('requester')
                             ->label(__('creators-ticketing::resources.ticket.requester'))
-                            ->formatStateUsing(fn ($record) => UserNameResolver::resolve($record->requester)),
-                        
+                            ->formatStateUsing(fn ($record) =>
+                                $record->isGuestTicket()
+                                    ? ($record->guest_name . ' (' . $record->guest_email . ')')
+                                    : UserNameResolver::resolve($record->requester)
+                            ),
+
                         TextEntry::make('assignee')
                             ->label(__('creators-ticketing::resources.ticket.assignee'))
                             ->formatStateUsing(fn ($record) => $record->assignee ? UserNameResolver::resolve($record->assignee) : __('creators-ticketing::resources.ticket.unassigned'))
                             ->default(__('creators-ticketing::resources.ticket.unassigned')),
-                        
+
                         TextEntry::make('department.name')
                             ->label(__('creators-ticketing::resources.ticket.department')),
-                        
+
                         TextEntry::make('status.name')
                             ->label(__('creators-ticketing::resources.ticket.status'))
                             ->badge()
                             ->color(fn ($record) => $record->status?->color ?? 'gray'),
-                        
+
                         TextEntry::make('priority')
                             ->badge(),
-                        
+
                         TextEntry::make('created_at')
                             ->dateTime(),
-                        
+
                         TextEntry::make('last_activity_at')
                             ->dateTime(),
                     ])
                     ->columns(2),
-                
+
                 InfoSection::make(__('creators-ticketing::resources.ticket.custom_fields'))
                     ->schema(function (Ticket $record) {
                         $department = $record->department;
-                        
+
                         $forms = collect();
 
                         if (isset($record->form_id)) {
                              $forms = Form::where('id', $record->form_id)->with('fields')->get();
-                        } 
-                        
+                        }
+
                         if ($forms->isEmpty() && $department) {
                             $forms = $department->forms()->with('fields')->get();
                         }
-                        
+
                         if ($forms->isEmpty() || empty($record->custom_fields)) {
                             return [
                                 TextEntry::make('no_custom_fields')
@@ -566,7 +570,7 @@ class TicketResource extends Resource
                                     ->columnSpanFull(),
                             ];
                         }
-                        
+
                         $schema = [];
                         $processedFields = [];
 
@@ -575,7 +579,7 @@ class TicketResource extends Resource
                                 if (in_array($field->name, $processedFields)) continue;
 
                                 $value = $record->custom_fields[$field->name] ?? null;
-                                
+
                                 if ($value !== null) {
                                     $processedFields[] = $field->name;
 
@@ -594,12 +598,12 @@ class TicketResource extends Resource
                                                 if ($field->type === 'checkbox' || $field->type === 'toggle') {
                                                     return $state ? __('creators-ticketing::resources.ticket.yes') : __('creators-ticketing::resources.ticket.no');
                                                 }
-                                                
+
                                                 if ($field->type === 'select' || $field->type === 'radio') {
                                                     $options = $field->options ?? [];
                                                     return $options[$state] ?? $state;
                                                 }
-                                                
+
                                                 return $state;
                                             })
                                             ->html(in_array($field->type, ['textarea', 'rich_editor']));
@@ -607,7 +611,7 @@ class TicketResource extends Resource
                                 }
                             }
                         }
-                        
+
                         return $schema ?: [
                             TextEntry::make('no_data')
                                 ->label('')
@@ -616,7 +620,7 @@ class TicketResource extends Resource
                         ];
                     })
                     ->columns(2)
-                    ->visible(fn (Ticket $record) => 
+                    ->visible(fn (Ticket $record) =>
                         !empty($record->custom_fields)
                     ),
             ]);
@@ -643,24 +647,24 @@ class TicketResource extends Resource
                     $canViewAllInDepartments = collect($permissions['permissions'])
                         ->filter(fn($perm) => $perm['can_view_all_tickets'] ?? false)
                         ->isNotEmpty();
-                    
+
                     $departmentsWithViewAll = collect($permissions['permissions'])
                         ->filter(fn($perm) => $perm['can_view_all_tickets'] ?? false)
                         ->keys()
                         ->toArray();
-                    
+
                     $departmentIds = $permissions['departments'];
-                    
+
                     $query->where(function (Builder $q) use ($user, $departmentIds, $departmentsWithViewAll) {
                         if (!empty($departmentsWithViewAll)) {
                             $q->orWhereIn('department_id', $departmentsWithViewAll);
                         }
-                        
+
                         $q->orWhere(function (Builder $subQ) use ($user, $departmentIds) {
                             $subQ->whereIn('department_id', $departmentIds)
                                 ->where('assignee_id', $user->getKey());
                         });
-                        
+
                         $q->orWhere('user_id', $user->getKey());
                     });
                 } else {
@@ -668,7 +672,7 @@ class TicketResource extends Resource
                 }
             })
            ->recordClasses(fn (Model $record) => match (true) {
-                method_exists($record, 'isUnseen') && $record->isUnseen() 
+                method_exists($record, 'isUnseen') && $record->isUnseen()
                     => 'font-bold bg-primary-50/50 dark:bg-primary-900/20',
                 default => null,
             })
@@ -689,7 +693,7 @@ class TicketResource extends Resource
                     ->label(__('creators-ticketing::resources.ticket.id'))
                     ->searchable()
                     ->sortable(),
-                
+
                 TextColumn::make('title')
                     ->label(__('creators-ticketing::resources.ticket.title_field'))
                     ->weight(fn (Model $record) => (method_exists($record, 'isUnseen') && $record->isUnseen()) ? 'bold' : 'medium')
@@ -701,30 +705,34 @@ class TicketResource extends Resource
                     })
                     ->limit(40)
                     ->tooltip(fn (Ticket $record): string => $record->title),
-                
+
                 TextColumn::make('department.name')
                     ->label(__('creators-ticketing::resources.ticket.department'))
                     ->color('primary')
                     ->searchable()
                     ->sortable(),
-                
+
                 TextColumn::make('requester.name')
                     ->label(__('creators-ticketing::resources.ticket.requester'))
                     ->searchable()
                     ->sortable()
-                    ->formatStateUsing(fn ($record) => UserNameResolver::resolve($record->requester)),
-                
+                    ->formatStateUsing(fn ($record) =>
+                        $record->isGuestTicket()
+                            ? ($record->guest_name ?? $record->guest_email ?? 'Guest')
+                            : UserNameResolver::resolve($record->requester)
+                    ),
+
                 TextColumn::make('assignee.name')
                     ->label(__('creators-ticketing::resources.ticket.assignee'))
                     ->searchable()
                     ->sortable()
                     ->default(__('creators-ticketing::resources.ticket.unassigned'))
                     ->formatStateUsing(fn ($record) => $record->assignee ? UserNameResolver::resolve($record->assignee) : __('creators-ticketing::resources.ticket.unassigned')),
-                
+
                 TextColumn::make('status.name')
                     ->label(__('creators-ticketing::resources.ticket.status'))
-                    ->formatStateUsing(fn ($record) => 
-                        $record->status?->name ? 
+                    ->formatStateUsing(fn ($record) =>
+                        $record->status?->name ?
                             "<span style='
                                 display: inline-flex;
                                 align-items: center;
@@ -737,15 +745,15 @@ class TicketResource extends Resource
                                 line-height: 1;
                                 border: 1.5px solid {$record->status->color};
                                 white-space: nowrap;
-                            '>{$record->status->name}</span>" 
+                            '>{$record->status->name}</span>"
                         : ''
                     )
                     ->html(),
-                
+
                 TextColumn::make('priority')
                     ->label(__('creators-ticketing::resources.ticket.priority'))
                     ->badge(),
-                
+
                 TextColumn::make('last_activity_at')
                     ->label(__('creators-ticketing::resources.ticket.last_activity'))
                     ->dateTime()
@@ -757,12 +765,12 @@ class TicketResource extends Resource
                     ->label(__('creators-ticketing::resources.ticket.department'))
                     ->relationship('department', 'name')
                     ->preload(),
-                
+
                 SelectFilter::make('status')
                     ->label(__('creators-ticketing::resources.ticket.status'))
                     ->relationship('status', 'name')
                     ->preload(),
-                
+
                 SelectFilter::make('priority')
                     ->label(__('creators-ticketing::resources.ticket.priority'))
                     ->options(TicketPriority::class)
@@ -773,13 +781,13 @@ class TicketResource extends Resource
                 Action::make('assign')
                     ->label(__('creators-ticketing::resources.ticket.actions.assign'))
                     ->icon('heroicon-o-user-plus')
-                    ->visible(fn (Model $record) => 
+                    ->visible(fn (Model $record) =>
                         $record instanceof Ticket && (
-                        $permissions['is_admin'] || 
+                        $permissions['is_admin'] ||
                         (in_array($record->department_id, $permissions['departments']) && ($permissions['permissions'][$record->department_id]['can_assign_tickets'] ?? false)))
                     )
                     ->form([
-                         (config('creators-ticketing.ticket_assign_scope') === 'department_only') 
+                         (config('creators-ticketing.ticket_assign_scope') === 'department_only')
                            ? Select::make('assignee_id')
                                     ->label(__('creators-ticketing::resources.ticket.actions.select_assignee'))
                                     ->searchable()
@@ -834,7 +842,7 @@ class TicketResource extends Resource
                                     ->default(fn (Model $record) => $record instanceof Ticket ? $record->assignee_id : null)
                                     ->preload(fn(Model $record) => $record instanceof Ticket && config('creators-ticketing.ticket_assign_scope') === 'department_only' && $record->department_id !== null)
                                     ->native(false)
-                        
+
                         :   Select::make('assignee_id')
                                 ->label(__('creators-ticketing::resources.ticket.actions.select_assignee'))
                                 ->searchable()
@@ -867,7 +875,7 @@ class TicketResource extends Resource
                             'description' => 'Ticket assigned',
                             'new_value' => $assignee ? UserNameResolver::resolve($assignee) : null,
                         ]);
-                        
+
                         Notification::make()
                             ->title(__('creators-ticketing::resources.ticket.notifications.assigned'))
                             ->success()
@@ -877,8 +885,8 @@ class TicketResource extends Resource
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make()
-                        ->visible(fn () => 
-                           $permissions['is_admin'] || 
+                        ->visible(fn () =>
+                           $permissions['is_admin'] ||
                            collect($permissions['permissions'])->pluck('can_delete_tickets')->contains(true)
                         ),
                 ]),

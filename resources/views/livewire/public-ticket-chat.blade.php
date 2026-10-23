@@ -26,24 +26,30 @@
     >
         @forelse($replies as $reply)
             @php 
-                $isUser = $reply->user_id === auth()->id();
+                $isOwner = $reply->user_id !== null
+                    ? $reply->user_id === auth()->id()
+                    : ($ticket->isGuestTicket() && $guestToken !== null);
+                $displayName = $reply->user_id
+                    ? \daacreators\CreatorsTicketing\Support\UserNameResolver::resolve($reply->user)
+                    : ($reply->guest_name ?? $ticket->guest_name ?? 'Guest');
+                $initial = strtoupper(substr($displayName, 0, 1));
             @endphp
             
-            <div class="flex {{ $isUser ? 'justify-end' : 'justify-start' }} animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <div class="flex items-end gap-2 max-w-[85%] sm:max-w-[75%] {{ $isUser ? 'flex-row-reverse' : '' }}">
-                    <div class="w-8 h-8 rounded-full {{ $isUser ? 'bg-blue-600' : 'bg-gray-600' }} flex items-center justify-center text-white text-sm font-semibold flex-shrink-0 shadow-sm">
-                        {{ strtoupper(substr(daacreators\CreatorsTicketing\Support\UserNameResolver::resolve($reply->user), 0, 1)) }}
+            <div class="flex {{ $isOwner ? 'justify-end' : 'justify-start' }} animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div class="flex items-end gap-2 max-w-[85%] sm:max-w-[75%] {{ $isOwner ? 'flex-row-reverse' : '' }}">
+                    <div class="w-8 h-8 rounded-full {{ $isOwner ? 'bg-blue-600' : 'bg-gray-600' }} flex items-center justify-center text-white text-sm font-semibold flex-shrink-0 shadow-sm">
+                        {{ $initial }}
                     </div>
                     
-                    <div class="flex flex-col {{ $isUser ? 'items-end' : 'items-start' }}">
-                        <div class="px-4 py-3 rounded-2xl shadow-sm {{ $isUser ? 'bg-blue-600 text-white rounded-br-sm' : 'bg-white text-gray-900 rounded-bl-sm border border-gray-200' }}">
-                            <div class="text-sm leading-relaxed prose prose-sm max-w-none {{ $isUser ? 'prose-invert' : '' }}">
-                                {!! $reply->content !!}
+                    <div class="flex flex-col {{ $isOwner ? 'items-end' : 'items-start' }}">
+                        <div class="px-4 py-3 rounded-2xl shadow-sm {{ $isOwner ? 'bg-blue-600 text-white rounded-br-sm' : 'bg-white text-gray-900 rounded-bl-sm border border-gray-200' }}">
+                            <div class="text-sm leading-relaxed prose prose-sm max-w-none {{ $isOwner ? 'prose-invert' : '' }}">
+                                {!! str($reply->content)->sanitizeHtml() !!}
                             </div>
                         </div>
                         
                         <div class="flex items-center gap-2 mt-1 px-2">
-                            <span class="text-xs text-gray-500 font-medium">{{ \daacreators\CreatorsTicketing\Support\UserNameResolver::resolve($reply->user) }}</span>
+                            <span class="text-xs text-gray-500 font-medium">{{ $displayName }}</span>
                             <span class="text-xs text-gray-300">•</span>
                             <span class="text-xs text-gray-400">
                                 @php
@@ -75,7 +81,7 @@
 
     {{-- Input Area --}}
     <div class="flex-none border-t border-gray-200 bg-white p-4 z-10">
-        @if($ticket->status->is_closing_status)
+        @if($ticket->status?->is_closing_status)
             <div class="bg-gray-50 rounded-lg p-4 text-center border border-gray-200">
                 <p class="text-sm text-gray-500 font-medium">
                     {{ __('creators-ticketing::resources.chat.ticket_closed') }}

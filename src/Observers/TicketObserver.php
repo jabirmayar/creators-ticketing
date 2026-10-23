@@ -47,7 +47,7 @@ class TicketObserver
     public function created(Ticket $ticket): void
     {
         $ticket->activities()->create([
-            'user_id' => auth()->id(),
+            'user_id' => auth()->id(), // null for guests — that's fine (nullable column)
             'description' => 'Ticket was created',
         ]);
 

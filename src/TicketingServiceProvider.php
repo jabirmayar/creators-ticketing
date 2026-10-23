@@ -11,6 +11,7 @@ use daacreators\CreatorsTicketing\Observers\TicketObserver;
 use daacreators\CreatorsTicketing\Http\Livewire\TicketTimeline;
 use daacreators\CreatorsTicketing\Http\Livewire\PublicTicketChat;
 use daacreators\CreatorsTicketing\Http\Livewire\TicketSubmitForm;
+use daacreators\CreatorsTicketing\Http\Livewire\GuestTicketView;
 use daacreators\CreatorsTicketing\Http\Livewire\TicketChatMessages;
 use daacreators\CreatorsTicketing\Filament\Widgets\TicketStatsWidget;
 use daacreators\CreatorsTicketing\Http\Livewire\TicketAttachmentsDisplay;
@@ -54,7 +55,14 @@ class TicketingServiceProvider extends ServiceProvider
 
     protected function registerEvents(): void
     {
-        
+        \Illuminate\Support\Facades\Event::listen(
+            \daacreators\CreatorsTicketing\Events\TicketCreated::class,
+            [\daacreators\CreatorsTicketing\Listeners\SendCustomerTicketEmail::class, 'created'],
+        );
+        \Illuminate\Support\Facades\Event::listen(
+            \daacreators\CreatorsTicketing\Events\TicketReplyAdded::class,
+            [\daacreators\CreatorsTicketing\Listeners\SendCustomerTicketEmail::class, 'replied'],
+        );
     }
 
     protected function registerPrivateDisk(): void
@@ -94,6 +102,10 @@ class TicketingServiceProvider extends ServiceProvider
         Livewire::component('creators-ticketing.ticket-submit-form', TicketSubmitForm::class);
 
         Livewire::component('creators-ticketing.public-ticket-chat', PublicTicketChat::class);
+
+        Livewire::component('creators-ticketing.guest-ticket-view', GuestTicketView::class);
+
+        Livewire::component('creators-ticketing.public-support-page', \daacreators\CreatorsTicketing\Http\Livewire\PublicSupportPage::class);
 
         Livewire::component('creators-ticketing.ticket-chat-messages', TicketChatMessages::class);
 

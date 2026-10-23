@@ -4,6 +4,29 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Guest / Anonymous Ticket Submission
+    |--------------------------------------------------------------------------
+    |
+    | When enabled, unauthenticated users can submit tickets by providing
+    | their name and email address. A unique tracking token is generated
+    | and a link is shown so they can follow up on their ticket without
+    | needing an account.
+    |
+    | When disabled (default), the ticket form requires authentication.
+    |
+    */
+    'allow_guest_tickets' => env('TICKETING_ALLOW_GUEST_TICKETS', false),
+
+    // Opt in to register the standalone page without conflicting with host routes.
+    'public_page_enabled' => env('TICKETING_PUBLIC_PAGE_ENABLED', false),
+    'public_path' => env('TICKETING_PUBLIC_PATH', 'support'),
+    'guest_layout' => 'creators-ticketing::layouts.public',
+
+    // Opt in after configuring Laravel mail and a queue worker.
+    'customer_emails_enabled' => env('TICKETING_CUSTOMER_EMAILS_ENABLED', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Navigation group name for Ticketing resources
     |--------------------------------------------------------------------------
     |
