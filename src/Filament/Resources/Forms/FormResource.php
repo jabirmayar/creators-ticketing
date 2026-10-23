@@ -37,6 +37,11 @@ class FormResource extends Resource
     {
         return __('creators-ticketing::resources.form.title');
     }
+    
+    public static function getCluster(): ?string
+    {
+        return config('creators-ticketing.cluster') ?? static::$cluster;
+    }
 
     public static function getModelLabel(): string
     {
