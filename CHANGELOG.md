@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Merge Dependabot PRs #25 and #26 for Tailwind CSS 4.3.3 and Autoprefixer 10.6.1.
+- Pin the Tailwind CLI and framework together, replace implicit downloads with local build tools, and scope CSS source scanning to the package.
+- Override the CLI's pinned file watcher with 2.6.0 to avoid its vulnerable braces/micromatch dependency chain.
+- Rebuild the shipped CSS and verify reproducible CSS builds in CI.
+
 ## v1.3.1 - 2026-10-23
 
 - Restore the missing MIT notice-retention paragraph so the license file matches the declared license.

@@ -31,7 +31,7 @@ jobs:
         run: composer audit --locked --no-dev --abandoned=report
 
   npm-audit:
-    name: Frontend build dependency audit
+    name: Frontend dependency audit and CSS build
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -44,3 +44,9 @@ jobs:
           package-manager-cache: false
       - name: Check locked frontend dependencies for advisories
         run: npm audit --package-lock-only --audit-level=high
+      - name: Install locked build tools without lifecycle scripts
+        run: npm ci --ignore-scripts --no-fund
+      - name: Build package CSS
+        run: npm run build
+      - name: Verify committed CSS matches the build
+        run: git diff --exit-code -- resources/dist/app.css

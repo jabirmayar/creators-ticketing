@@ -398,6 +398,8 @@ Note: attachments require `storage/app/private` to be writable by the PHP proces
 
 ## Contributing
 
+To rebuild the shipped CSS, use Node.js 22 and run `npm ci --ignore-scripts` followed by `npm run build` in the package directory. Commit the regenerated `resources/dist/app.css`. The compiler and Tailwind versions are pinned together, source scanning is limited to this package's views and PHP sources, and CI verifies that the committed CSS matches a clean build. The CLI's file watcher is overridden to 2.6.0 to avoid the vulnerable braces/micromatch dependency chain in its upstream pinned version; keep this override until the CLI updates that dependency.
+
 Thank you for considering contributing to Creators Ticketing! You can contribute in the following ways:
 
 1. Report bugs

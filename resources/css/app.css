@@ -1,4 +1,6 @@
-@import "tailwindcss";
+@import "tailwindcss" source(none);
+@source "../views";
+@source "../../src";
 
 .creators-ticketing [x-ref="chatContainer"]::-webkit-scrollbar {
     width: 6px;
