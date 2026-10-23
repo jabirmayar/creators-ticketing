@@ -387,6 +387,8 @@ Access spam logs through **Spam Logs** in the admin panel.
 
 ## Security
 
+To report a vulnerability privately, email **hello@jabirkhan.com**. See [SECURITY.md](SECURITY.md) for supported versions, reporting guidance, and the scope of automated dependency checks.
+
 The package includes built-in security features:
 - Private file storage for attachments
 - Permission-based access control

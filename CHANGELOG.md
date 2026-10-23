@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.3.1 - 2026-10-23
+
+- Restore the missing MIT notice-retention paragraph so the license file matches the declared license.
+- Document private vulnerability reporting and supported security-fix versions in `SECURITY.md`.
+- Add Composer and npm dependency audits on pushes, pull requests, and a weekly schedule, plus Dependabot updates for dependencies and pinned workflow actions.
+- Refresh the development lock files within existing manifest constraints to remove known dependency advisories. Consumers must also audit and update their host application's dependencies; a library's lock file does not control consumer installations.
+
 ## v1.3.0 - 2026-10-23
 
 - Add opt-in public support page, anonymous ticket submission, and private tracking/chat links.
